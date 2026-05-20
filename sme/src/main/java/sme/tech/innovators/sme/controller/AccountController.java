@@ -147,10 +147,6 @@ public class AccountController {
         return ResponseEntity.ok(ApiResponse.success("Account deleted successfully"));
     }
 
-    // -------------------------------------------------------------------------
-    // Private helpers
-    // -------------------------------------------------------------------------
-
     /**
      * Resolves the authenticated user's UUID from the Spring Security principal.
      * The principal name is the user's email (set by CustomUserDetailsService),
