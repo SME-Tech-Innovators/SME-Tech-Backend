@@ -16,4 +16,5 @@ public final class ErrorCodes {
     public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
     public static final String INVALID_CREDENTIALS = "INVALID_CREDENTIALS";
     public static final String ACCOUNT_ALREADY_DELETED = "ACCOUNT_ALREADY_DELETED";
+    public static final String ACCOUNT_ALREADY_VERIFIED = "ACCOUNT_ALREADY_VERIFIED";
 }

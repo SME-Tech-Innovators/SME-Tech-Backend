@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,9 +32,6 @@ public class AuthController {
     private final VerificationService verificationService;
     private final AuthService authService;
 
-    @Value("${app.frontend-url}")
-    private String frontendUrl;
-
     @Operation(summary = "Register a new user and business",
                description = "Creates a user account and business profile. Sends a verification email. Rate limited to 5/hour per IP and 3/hour per email.")
     @ApiResponses({
@@ -56,16 +52,14 @@ public class AuthController {
     @Operation(summary = "Verify email address",
                description = "Validates the token sent to the user's email and activates the account.")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "302", description = "Redirect to frontend on successful verification"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Email verified successfully"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Token expired"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Token not found")
     })
     @GetMapping("/verify")
-    public ResponseEntity<Void> verify(@RequestParam String token) {
+    public ResponseEntity<ApiResponse<String>> verify(@RequestParam String token) {
         verificationService.verifyToken(token);
-        return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create(frontendUrl))
-                .build();
+        return ResponseEntity.ok(ApiResponse.success("Email verified successfully. You can now log in."));
     }
 
     @Operation(summary = "Resend verification email",

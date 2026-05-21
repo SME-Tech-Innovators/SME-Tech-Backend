@@ -21,6 +21,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ErrorCodes.EMAIL_ALREADY_EXISTS, ex.getMessage()));
     }
 
+    @ExceptionHandler(AlreadyVerifiedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAlreadyVerified(AlreadyVerifiedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(ErrorCodes.ACCOUNT_ALREADY_VERIFIED, ex.getMessage()));
+    }
+
     @ExceptionHandler(InvalidTokenException.class)
     public ResponseEntity<ApiResponse<Void>> handleInvalidToken(InvalidTokenException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)

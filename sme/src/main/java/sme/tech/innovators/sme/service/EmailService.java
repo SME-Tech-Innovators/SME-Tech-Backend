@@ -16,8 +16,8 @@ public class EmailService {
     private final SesClient sesClient;
     private final AuditService auditService;
 
-    @Value("${app.base-url}")
-    private String baseUrl;
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     @Value("${app.email.from}")
     private String fromEmail;
@@ -27,7 +27,8 @@ public class EmailService {
 
     @Async("emailTaskExecutor")
     public void sendVerificationEmail(String toEmail, String fullName, String token) {
-        String verificationLink = baseUrl + "/api/v1/auth/verify?token=" + token;
+        String normalizedFrontendUrl = frontendUrl.endsWith("/") ? frontendUrl.substring(0, frontendUrl.length() - 1) : frontendUrl;
+        String verificationLink = normalizedFrontendUrl + "/verify?token=" + token;
         String subject = "Verify your email address";
         String textBody = "Hi " + fullName + ",\n\nPlease verify your email by clicking the link below:\n\n"
                 + verificationLink + "\n\nThis link expires in 24 hours.\n\nThank you!";

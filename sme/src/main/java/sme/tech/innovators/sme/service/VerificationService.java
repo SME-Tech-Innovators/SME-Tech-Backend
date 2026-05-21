@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import sme.tech.innovators.sme.entity.AccountStatus;
 import sme.tech.innovators.sme.entity.User;
 import sme.tech.innovators.sme.entity.VerificationToken;
+import sme.tech.innovators.sme.exception.AlreadyVerifiedException;
 import sme.tech.innovators.sme.exception.InvalidTokenException;
 import sme.tech.innovators.sme.exception.TokenExpiredException;
 import sme.tech.innovators.sme.repository.UserRepository;
@@ -38,13 +39,24 @@ public class VerificationService {
     @Transactional
     public void verifyToken(String tokenValue) {
         VerificationToken token = verificationTokenRepository.findByToken(tokenValue)
-                .orElseThrow(() -> new InvalidTokenException("Verification token not found"));
-
-        if (token.isExpired()) {
-            throw new TokenExpiredException("Verification token has expired");
-        }
+                .orElseThrow(() -> new InvalidTokenException(
+                        "This verification link is invalid or has already been used. " +
+                        "If your account is already verified, you can log in directly."));
 
         User user = token.getUser();
+
+        if (user.getAccountStatus() == AccountStatus.VERIFIED) {
+            verificationTokenRepository.delete(token);
+            throw new AlreadyVerifiedException(
+                    "Your email address has already been verified. You can log in now.");
+        }
+
+        if (token.isExpired()) {
+            throw new TokenExpiredException(
+                    "This verification link has expired. Verification links are valid for 24 hours. " +
+                    "Please request a new verification email.");
+        }
+
         user.setAccountStatus(AccountStatus.VERIFIED);
         userRepository.save(user);
         verificationTokenRepository.delete(token);
