@@ -31,8 +31,8 @@ public class RegistrationService {
     private final RateLimitService rateLimitService;
     private final AuditService auditService;
 
-    @Value("${app.base-url}")
-    private String baseUrl;
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     @Transactional
     public RegistrationResponse registerUserAndBusiness(RegistrationRequest request, String ipAddress) {
@@ -64,7 +64,7 @@ public class RegistrationService {
         user = userRepository.saveAndFlush(user);
 
         String slug = slugGeneratorService.generateUniqueSlug(businessName);
-        String publicLink = baseUrl + "/store/" + slug;
+        String publicLink = frontendUrl + "/store/" + slug;
 
         Business business = Business.builder()
                 .name(businessName)

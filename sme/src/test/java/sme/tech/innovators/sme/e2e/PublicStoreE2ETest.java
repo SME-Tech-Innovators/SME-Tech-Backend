@@ -7,7 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
-import org.springframework.mail.javamail.JavaMailSender;
+import software.amazon.awssdk.services.ses.SesClient;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import sme.tech.innovators.sme.entity.*;
@@ -27,7 +27,7 @@ class PublicStoreE2ETest {
     @Autowired private UserRepository userRepository;
     @Autowired private BusinessRepository businessRepository;
     @Autowired private PasswordEncoder passwordEncoder;
-    @MockBean private JavaMailSender javaMailSender;
+    @MockBean private SesClient sesClient;
 
     @BeforeEach
     void setUp() {

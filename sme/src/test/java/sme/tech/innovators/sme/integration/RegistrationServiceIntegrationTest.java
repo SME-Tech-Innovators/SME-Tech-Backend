@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.mail.javamail.JavaMailSender;
+import software.amazon.awssdk.services.ses.SesClient;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import sme.tech.innovators.sme.dto.request.BusinessRegistrationRequest;
@@ -38,7 +38,7 @@ class RegistrationServiceIntegrationTest {
     private VerificationTokenRepository verificationTokenRepository;
 
     @MockBean
-    private JavaMailSender javaMailSender;
+    private SesClient sesClient;
 
     private RegistrationRequest buildRequest(String email, String businessName) {
         BusinessRegistrationRequest business = new BusinessRegistrationRequest();

@@ -9,7 +9,7 @@ A multi-tenant SaaS platform for SME owners, automating business registration, o
 - Java 21
 - Maven (wrapper included — use `./mvnw`)
 - PostgreSQL (Aiven cloud instance — see configuration below)
-- Gmail account with an App Password for SMTP
+- AWS account with SES enabled and a verified sender address
 
 ---
 
@@ -22,10 +22,13 @@ All secrets are injected via environment variables. **Never hardcode credentials
 | `DB_URL`                | Full JDBC connection URL (with SSL)              | Aiven PostgreSQL (`smetech` DB, port 12667, `sslmode=require`) |
 | `DB_USERNAME`           | PostgreSQL username                              | `avnadmin`                                                    |
 | `DB_PASSWORD`           | PostgreSQL password                              | `changeme` — **must be overridden**                           |
-| `APP_EMAIL`             | Gmail address used for sending emails (binds to `spring.mail.username`) | `smetechinnovators@gmail.com`          |
-| `APP_PASSWORD`          | Gmail App Password — not your account password (binds to `spring.mail.password`) | `changeme` — **must be overridden** |
+| `AWS_ACCESS_KEY_ID`     | AWS IAM access key for SES authentication        | — **required**                                                |
+| `AWS_SECRET_ACCESS_KEY` | AWS IAM secret key for SES authentication        | — **required**                                                |
+| `AWS_REGION`            | AWS region where SES is enabled (e.g. `us-east-1`) | — **required**                                              |
+| `APP_EMAIL_FROM`        | Verified SES sender address (e.g. `noreply@yourdomain.com`) | — **required**                              |
+| `FRONTEND_URL`          | Frontend base URL used for post-verification redirect and public storefront links | `https://sme-operations.netlify.app` |
 | `JWT_SECRET`            | Hex-encoded 256-bit secret for JWT signing       | `404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970` — **hardcoded fallback, must be overridden in production** |
-| `APP_BASE_URL`          | Base URL used in email verification links        | `https://sme-operations-dza7e5czhdggexfh.canadacentral-01.azurewebsites.net` |
+| `APP_BASE_URL`          | Backend base URL used in email verification links | `https://sme-operations-dza7e5czhdggexfh.canadacentral-01.azurewebsites.net` |
 | `APP_DOMAIN`            | Domain used for public storefront links          | `localhost:8080`                                              |
 | `CORS_ALLOWED_ORIGINS`  | Comma-separated list of allowed CORS origins | `http://localhost:8080,http://localhost:5173,https://sme-operations.netlify.app,https://sme-operations-dza7e5czhdggexfh.canadacentral-01.azurewebsites.net/` |
 
@@ -36,8 +39,11 @@ All secrets are injected via environment variables. **Never hardcode credentials
 export DB_URL="jdbc:postgresql://pg-23b34967-sihlentshangase06-6d21.b.aivencloud.com:12667/smetech?sslmode=require"
 export DB_USERNAME=avnadmin
 export DB_PASSWORD=your-db-password
-export APP_EMAIL=yourapp@gmail.com
-export APP_PASSWORD="xxxx xxxx xxxx xxxx"
+export AWS_ACCESS_KEY_ID=your-aws-access-key
+export AWS_SECRET_ACCESS_KEY=your-aws-secret-key
+export AWS_REGION=us-east-1
+export APP_EMAIL_FROM=noreply@yourdomain.com
+export FRONTEND_URL="https://sme-operations.netlify.app"
 export JWT_SECRET=your-hex-encoded-secret
 export APP_BASE_URL="https://sme-operations-dza7e5czhdggexfh.canadacentral-01.azurewebsites.net"
 export APP_DOMAIN="sme-operations-dza7e5czhdggexfh.canadacentral-01.azurewebsites.net"
@@ -49,8 +55,11 @@ export CORS_ALLOWED_ORIGINS="http://localhost:8080,http://localhost:5173,https:/
 $env:DB_URL="jdbc:postgresql://pg-23b34967-sihlentshangase06-6d21.b.aivencloud.com:12667/smetech?sslmode=require"
 $env:DB_USERNAME="avnadmin"
 $env:DB_PASSWORD="your-db-password"
-$env:APP_EMAIL="yourapp@gmail.com"
-$env:APP_PASSWORD="xxxx xxxx xxxx xxxx"
+$env:AWS_ACCESS_KEY_ID="your-aws-access-key"
+$env:AWS_SECRET_ACCESS_KEY="your-aws-secret-key"
+$env:AWS_REGION="us-east-1"
+$env:APP_EMAIL_FROM="noreply@yourdomain.com"
+$env:FRONTEND_URL="https://sme-operations.netlify.app"
 $env:JWT_SECRET="your-hex-encoded-secret"
 $env:APP_BASE_URL="https://sme-operations-dza7e5czhdggexfh.canadacentral-01.azurewebsites.net"
 $env:APP_DOMAIN="sme-operations-dza7e5czhdggexfh.canadacentral-01.azurewebsites.net"
@@ -64,8 +73,11 @@ Create `sme/.env` (already in `.gitignore`):
 DB_URL=jdbc:postgresql://pg-23b34967-sihlentshangase06-6d21.b.aivencloud.com:12667/smetech?sslmode=require
 DB_USERNAME=avnadmin
 DB_PASSWORD=your-db-password
-APP_EMAIL=yourapp@gmail.com
-APP_PASSWORD=xxxx xxxx xxxx xxxx
+AWS_ACCESS_KEY_ID=your-aws-access-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret-key
+AWS_REGION=us-east-1
+APP_EMAIL_FROM=noreply@yourdomain.com
+FRONTEND_URL=https://sme-operations.netlify.app
 JWT_SECRET=your-hex-encoded-secret
 APP_BASE_URL=https://sme-operations-dza7e5czhdggexfh.canadacentral-01.azurewebsites.net
 APP_DOMAIN=sme-operations-dza7e5czhdggexfh.canadacentral-01.azurewebsites.net
@@ -106,22 +118,25 @@ $env:CORS_ALLOWED_ORIGINS="https://your-frontend.com,https://another-origin.com"
 
 ---
 
-## Mail (SMTP)
+## Email (AWS SES)
 
-Email is sent via Gmail SMTP using async delivery with retry logic (3 attempts, exponential backoff: 1s → 2s → 4s).
+Email is sent via AWS Simple Email Service (SES) using async delivery with retry logic (3 attempts, exponential backoff: 1s → 2s → 4s). Both plain-text and HTML body parts are included in every outbound message.
 
-| Setting              | Value              |
-|----------------------|--------------------|
-| Host                 | `smtp.gmail.com`   |
-| Port                 | `587` (STARTTLS)   |
-| Auth                 | Required           |
-| Connection timeout   | 10,000 ms          |
-| Read timeout         | 10,000 ms          |
-| Write timeout        | 10,000 ms          |
+| Setting              | Value                                      |
+|----------------------|--------------------------------------------|
+| Transport            | AWS SES SDK v2 (HTTPS)                     |
+| Credential provider  | `StaticCredentialsProvider` (env vars only) |
+| Region               | Configured via `AWS_REGION` env var        |
+| Sender address       | Configured via `APP_EMAIL_FROM` env var    |
+| From display name    | `SME Operations <{APP_EMAIL_FROM}>`        |
+| Retry attempts       | 3                                          |
+| Backoff delays       | 1 s → 2 s → 4 s                            |
 
-Credentials are injected via the `APP_EMAIL` and `APP_PASSWORD` environment variables, which bind to `spring.mail.username` and `spring.mail.password` respectively. Use a Gmail App Password — not your account password.
+Credentials are read exclusively from `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables — no EC2 instance metadata or ECS task roles are used, making this compatible with Azure App Service hosting.
 
-> The test profile disables SMTP entirely and uses a local stub on port 3025.
+The sender address must be verified in AWS SES before emails will be delivered. In SES sandbox mode, recipient addresses must also be verified.
+
+> The test profile mocks `SesClient` — no real AWS credentials are needed to run tests.
 
 ---
 
@@ -226,7 +241,7 @@ Builds a JAR with Maven and deploys it directly to Azure App Service (no Docker)
 
 ---
 
-> For both pipelines, environment variables (DB credentials, JWT secret, mail credentials, CORS origins) must be set in the Azure App Service **Configuration → Application Settings** panel — they are never baked into the build artifact.
+> For both pipelines, environment variables (DB credentials, JWT secret, AWS SES credentials, sender address, frontend URL, CORS origins) must be set in the Azure App Service **Configuration → Application Settings** panel — they are never baked into the build artifact.
 
 ---
 
@@ -255,7 +270,7 @@ The Swagger UI exposes a server selector with the following environments:
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | `POST` | `/register` | None | Register a new user and business. Rate limited: 5/hour per IP, 3/hour per email. |
-| `GET` | `/verify` | None | Verify email address using the token from the verification email. |
+| `GET` | `/verify` | None | Verify email address using the token from the verification email. Returns HTTP 302 redirect to the frontend on success; HTTP 400/404 on invalid or expired token. |
 | `POST` | `/resend-verification` | None | Resend the verification email for a pending account. |
 | `POST` | `/login` | None | Authenticate and receive a JWT access token (15 min) + refresh token (7 days). |
 | `POST` | `/refresh` | None | Exchange a valid refresh token for a new access token. |
@@ -302,7 +317,7 @@ All account endpoints require a valid JWT Bearer token.
   "businessName": "Jane's Bakery",
   "businessDescription": "Artisan breads and pastries",
   "slug": "janes-bakery",
-  "publicLink": "https://domain/store/janes-bakery",
+  "publicLink": "https://sme-operations.netlify.app/store/janes-bakery",
   "businessUpdatedAt": "2025-01-01T10:00:00"
 }
 ```

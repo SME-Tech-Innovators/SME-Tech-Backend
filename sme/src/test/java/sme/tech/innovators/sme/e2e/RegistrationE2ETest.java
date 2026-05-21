@@ -6,9 +6,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import software.amazon.awssdk.services.ses.SesClient;
 import org.springframework.test.context.ActiveProfiles;
-import sme.tech.innovators.sme.entity.AccountStatus;
 import sme.tech.innovators.sme.repository.UserRepository;
 import sme.tech.innovators.sme.repository.VerificationTokenRepository;
 
@@ -23,7 +23,7 @@ class RegistrationE2ETest {
     @Autowired private TestRestTemplate restTemplate;
     @Autowired private UserRepository userRepository;
     @Autowired private VerificationTokenRepository verificationTokenRepository;
-    @MockBean private JavaMailSender javaMailSender;
+    @MockBean private SesClient sesClient;
 
     @Test
     void registerReturns201WithApiResponseEnvelope() {
@@ -43,10 +43,14 @@ class RegistrationE2ETest {
     }
 
     @Test
-    void verifyTokenReturns200AndUpdatesAccountStatus() {
+    void verifyTokenReturns302AndUpdatesAccountStatus() {
         Map<String, Object> request = Map.of(
-            "user", Map.of("email", "e2e-verify@example.com", "password", "SecurePass1!", "fullName", "Verify E2E"),
-            "business", Map.of("name", "Verify E2E Business")
+            "business", Map.of(
+                "email", "e2e-verify@example.com",
+                "password", "SecurePass1!",
+                "fullName", "Verify E2E",
+                "businessName", "Verify E2E Business"
+            )
         );
         restTemplate.postForEntity("/api/v1/auth/register", request, Map.class);
 
@@ -55,14 +59,20 @@ class RegistrationE2ETest {
                 .filter(t -> t.getUser().getId().equals(user.getId()))
                 .findFirst().orElseThrow();
 
-        ResponseEntity<Map> verifyResponse = restTemplate.getForEntity(
-                "/api/v1/auth/verify?token=" + token.getToken(), Map.class);
+        // Disable redirect following so we can assert the 302 directly
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setOutputStreaming(false);
+        restTemplate.getRestTemplate().setRequestFactory(factory);
 
-        assertEquals(HttpStatus.OK, verifyResponse.getStatusCode());
-        assertEquals(true, verifyResponse.getBody().get("success"));
+        ResponseEntity<Void> verifyResponse = restTemplate.getForEntity(
+                "/api/v1/auth/verify?token=" + token.getToken(), Void.class);
+
+        assertEquals(HttpStatus.FOUND, verifyResponse.getStatusCode());
+        assertNotNull(verifyResponse.getHeaders().getLocation(),
+                "Location header must be present on 302 redirect");
 
         var updatedUser = userRepository.findById(user.getId()).orElseThrow();
-        assertEquals(AccountStatus.VERIFIED, updatedUser.getAccountStatus());
+        assertEquals(sme.tech.innovators.sme.entity.AccountStatus.VERIFIED, updatedUser.getAccountStatus());
     }
 
     @Test

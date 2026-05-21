@@ -6,7 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
-import org.springframework.mail.javamail.JavaMailSender;
+import software.amazon.awssdk.services.ses.SesClient;
 import org.springframework.test.context.ActiveProfiles;
 import sme.tech.innovators.sme.service.RateLimitService;
 
@@ -21,7 +21,7 @@ class RateLimitE2ETest {
 
     @Autowired private TestRestTemplate restTemplate;
     @Autowired private RateLimitService rateLimitService;
-    @MockBean private JavaMailSender javaMailSender;
+    @MockBean private SesClient sesClient;
 
     @Test
     void correlationIdHeaderPresentInAllResponses() {

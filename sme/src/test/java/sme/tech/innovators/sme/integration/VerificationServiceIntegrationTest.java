@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.mail.javamail.JavaMailSender;
+import software.amazon.awssdk.services.ses.SesClient;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import sme.tech.innovators.sme.entity.*;
@@ -29,7 +29,7 @@ class VerificationServiceIntegrationTest {
     @Autowired private VerificationService verificationService;
     @Autowired private UserRepository userRepository;
     @Autowired private VerificationTokenRepository verificationTokenRepository;
-    @MockBean private JavaMailSender javaMailSender;
+    @MockBean private SesClient sesClient;
 
     private User pendingUser;
 
