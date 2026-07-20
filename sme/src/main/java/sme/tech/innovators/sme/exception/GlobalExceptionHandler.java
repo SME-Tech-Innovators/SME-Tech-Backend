@@ -15,6 +15,36 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(WorkspaceNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleWorkspaceNotFound(WorkspaceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ErrorCodes.WORKSPACE_NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(StorefrontNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleStorefrontNotFound(StorefrontNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ErrorCodes.STOREFRONT_NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(TemplateNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTemplateNotFound(TemplateNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ErrorCodes.TEMPLATE_NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(TemplateDisabledException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTemplateDisabled(TemplateDisabledException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ApiResponse.error(ErrorCodes.TEMPLATE_DISABLED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidStorefrontConfigException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidStorefrontConfig(InvalidStorefrontConfigException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ErrorCodes.INVALID_STOREFRONT_CONFIG, ex.getMessage()));
+    }
+
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<Void>> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
