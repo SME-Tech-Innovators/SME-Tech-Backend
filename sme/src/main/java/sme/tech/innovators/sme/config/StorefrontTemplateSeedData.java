@@ -49,7 +49,7 @@ public class StorefrontTemplateSeedData implements ApplicationRunner {
                 .status(StorefrontTemplateStatus.AVAILABLE)
                 .latestVersion(1)
                 .build();
-        templateRepository.save(template);
+        templateRepository.saveAndFlush(template);
 
         List<String> supportedThemes = List.of("blue", "red");
         List<String> supportedSections = List.of(

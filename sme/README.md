@@ -66,7 +66,38 @@ $env:APP_DOMAIN="sme-operations-dza7e5czhdggexfh.canadacentral-01.azurewebsites.
 $env:CORS_ALLOWED_ORIGINS="http://localhost:8080,http://localhost:5173,https://sme-operations.netlify.app"
 ```
 
-**Using a `.env` file (recommended for local dev):**
+**Using `application-local.yaml` (recommended for local dev):**
+
+Create `sme/src/main/resources/application-local.yaml` (already in `.gitignore` — never commit this file). It overrides only the values that differ from the production defaults, keeping your IDE run config clean.
+
+```yaml
+# Local development overrides — gitignored, never commit this file
+# Activate with: spring.profiles.active=local (set in IntelliJ run config)
+
+spring:
+  datasource:
+    username: your-db-username
+    password: your-db-password
+
+app:
+  base-url: http://localhost:8080
+  domain: localhost
+  frontend-url: http://localhost:3000
+  email:
+    from: your-verified-ses-address@yourdomain.com
+  aws:
+    region: us-east-1
+  cors:
+    allowed-origins: http://localhost:3000
+```
+
+Activate the `local` profile in your IntelliJ run configuration:
+- **VM options**: `-Dspring.profiles.active=local`
+- **OR** set the environment variable `SPRING_PROFILES_ACTIVE=local`
+
+AWS credentials (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) still need to be set as environment variables — they are intentionally not in this file to prevent accidental exposure.
+
+**Using a `.env` file (alternative for local dev):**
 
 Create `sme/.env` (already in `.gitignore`):
 ```
