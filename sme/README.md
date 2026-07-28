@@ -291,8 +291,9 @@ The Swagger UI exposes a server selector with the following environments:
 | Environment | URL |
 |-------------|-----|
 | Local Development | `http://localhost:8080` |
-| Production | `https://sme-operations-dza7e5czhdggexfh.canadacentral-01.azurewebsites.net` |
-| dev | `https://innovators-d2b3gycthabmdnhj.southafricanorth-01.azurewebsites.net` |
+| sme-tech (Brazil) | `https://sme-tech-brdyghahdgcab3a2.brazilsouth-01.azurewebsites.net` |
+| sme-operations (Canada) | `https://sme-operations-dza7e5czhdggexfh.canadacentral-01.azurewebsites.net` |
+| innovators (South Africa) | `https://innovators-d2b3gycthabmdnhj.southafricanorth-01.azurewebsites.net` |
 
 ---
 
