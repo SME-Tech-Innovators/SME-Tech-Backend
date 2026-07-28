@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: read
 
@@ -35,7 +35,7 @@ jobs:
           path: sme/target/*.jar
 
   deploy:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: build
     permissions:
       id-token: write
@@ -50,9 +50,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_3BA8C147C9E142708B592BCFF822A018 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_103D857F0FF746C39D7DA8A4CBCD62CD }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_66D6C9DE2DED4CC090AB7C06BEA54B71 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_882AB4D62049422482E0D0DDB55FEFD8 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_258442AAFFEC4C08BA12AE6606DD8A9F }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B503E0DFCE204A288AC69C73DC37DC81 }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -61,3 +61,4 @@ jobs:
           app-name: 'sme-tech'
           slot-name: 'Production'
           package: '*.jar'
+          startup-command: 'java -jar /home/site/wwwroot/*.jar'
