@@ -17,4 +17,11 @@ public final class ErrorCodes {
     public static final String INVALID_CREDENTIALS = "INVALID_CREDENTIALS";
     public static final String ACCOUNT_ALREADY_DELETED = "ACCOUNT_ALREADY_DELETED";
     public static final String ACCOUNT_ALREADY_VERIFIED = "ACCOUNT_ALREADY_VERIFIED";
+
+    // Storefront / workspace
+    public static final String WORKSPACE_NOT_FOUND = "WORKSPACE_NOT_FOUND";
+    public static final String STOREFRONT_NOT_FOUND = "STOREFRONT_NOT_FOUND";
+    public static final String TEMPLATE_NOT_FOUND = "TEMPLATE_NOT_FOUND";
+    public static final String TEMPLATE_DISABLED = "TEMPLATE_DISABLED";
+    public static final String INVALID_STOREFRONT_CONFIG = "INVALID_STOREFRONT_CONFIG";
 }

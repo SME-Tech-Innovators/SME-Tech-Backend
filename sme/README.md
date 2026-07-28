@@ -66,7 +66,38 @@ $env:APP_DOMAIN="sme-operations-dza7e5czhdggexfh.canadacentral-01.azurewebsites.
 $env:CORS_ALLOWED_ORIGINS="http://localhost:8080,http://localhost:5173,https://sme-operations.netlify.app"
 ```
 
-**Using a `.env` file (recommended for local dev):**
+**Using `application-local.yaml` (recommended for local dev):**
+
+Create `sme/src/main/resources/application-local.yaml` (already in `.gitignore` — never commit this file). It overrides only the values that differ from the production defaults, keeping your IDE run config clean.
+
+```yaml
+# Local development overrides — gitignored, never commit this file
+# Activate with: spring.profiles.active=local (set in IntelliJ run config)
+
+spring:
+  datasource:
+    username: your-db-username
+    password: your-db-password
+
+app:
+  base-url: http://localhost:8080
+  domain: localhost
+  frontend-url: http://localhost:3000
+  email:
+    from: your-verified-ses-address@yourdomain.com
+  aws:
+    region: us-east-1
+  cors:
+    allowed-origins: http://localhost:3000
+```
+
+Activate the `local` profile in your IntelliJ run configuration:
+- **VM options**: `-Dspring.profiles.active=local`
+- **OR** set the environment variable `SPRING_PROFILES_ACTIVE=local`
+
+AWS credentials (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) still need to be set as environment variables — they are intentionally not in this file to prevent accidental exposure.
+
+**Using a `.env` file (alternative for local dev):**
 
 Create `sme/.env` (already in `.gitignore`):
 ```
@@ -338,6 +369,67 @@ On success, the user and their business are soft-deleted (`is_deleted = true`, `
 
 ---
 
+### Workspace Endpoints (`/api/v1/workspaces`)
+
+All workspace endpoints require a valid JWT Bearer token. A workspace is auto-created for the authenticated user's business on first access.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/` | List all workspaces owned by the authenticated user. Auto-creates a workspace if none exists. |
+| `GET` | `/{workspaceId}` | Get a single workspace by ID. Returns 404 if not found or not owned by the caller. |
+| `GET` | `/{workspaceId}/storefront/draft` | Get the storefront draft for the workspace. Auto-creates a storefront from the `classic-boutique` v1 template if none exists. |
+| `PUT` | `/{workspaceId}/storefront/draft` | Replace the full draft config. Validates the config against the specified template version before saving. |
+| `POST` | `/{workspaceId}/storefront/draft/reset` | Reset the draft config back to the template's default config. |
+
+**`GET /` — response shape (`data` field):**
+```json
+[
+  {
+    "id": "uuid",
+    "businessId": "uuid",
+    "name": "Jane's Bakery",
+    "publicSlug": null,
+    "status": "DRAFT",
+    "createdAt": "2025-01-01T10:00:00",
+    "updatedAt": "2025-01-01T10:00:00"
+  }
+]
+```
+
+**`PUT /{workspaceId}/storefront/draft` — request body:**
+```json
+{
+  "templateId": "classic-boutique",
+  "templateVersion": 1,
+  "configVersion": 1,
+  "config": {
+    "theme": "light",
+    "sections": ["hero", "products", "contact"]
+  }
+}
+```
+
+**Storefront draft response shape (`data` field):**
+```json
+{
+  "workspaceId": "uuid",
+  "storefrontId": "uuid",
+  "templateId": "classic-boutique",
+  "templateVersion": 1,
+  "configVersion": 1,
+  "config": { ... },
+  "updatedAt": "2025-01-01T10:00:00"
+}
+```
+
+**Storefront validation rules:**
+- The `templateId` must exist and not be `DISABLED`.
+- The `templateVersion` must exist for that template.
+- The `config` sections must be a subset of the template version's `supportedSections`.
+- The `config` theme must be one of the template version's `supportedThemes`.
+
+---
+
 ### Public Store Endpoints (`/api/v1/public`)
 
 | Method | Path | Auth | Description |
@@ -364,6 +456,11 @@ All error responses use the `ApiResponse` envelope with `success: false`. The `e
 | `SLUG_GENERATION_FAILED` | 500 | Unique slug could not be generated after 5 retries. |
 | `ACCOUNT_ALREADY_DELETED` | 409 | The account has already been soft-deleted and cannot be acted upon. |
 | `INTERNAL_ERROR` | 500 | An unexpected server-side error occurred. No internal details are exposed. |
+| `WORKSPACE_NOT_FOUND` | 404 | The requested workspace does not exist or is not accessible. |
+| `STOREFRONT_NOT_FOUND` | 404 | The requested storefront does not exist or has been removed. |
+| `TEMPLATE_NOT_FOUND` | 404 | The specified storefront template does not exist. |
+| `TEMPLATE_DISABLED` | 422 | The specified storefront template exists but is currently disabled. |
+| `INVALID_STOREFRONT_CONFIG` | 400 | The storefront configuration is missing required fields or contains invalid values. |
 
 **Error response shape:**
 ```json
