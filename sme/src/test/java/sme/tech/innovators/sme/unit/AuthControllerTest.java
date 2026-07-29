@@ -37,8 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(AuthController.class)
 @Import({SecurityConfig.class, GlobalExceptionHandler.class})
 @TestPropertySource(properties = {
-        "app.cors.allowed-origins=http://localhost:3000",
-        "app.frontend-url=http://localhost:3000"
+        "app.cors.allowed-origins=http://localhost:3000"
 })
 class AuthControllerTest {
 
@@ -89,12 +88,11 @@ class AuthControllerTest {
     // -------------------------------------------------------------------------
 
     @Test
-    void verify_validToken_returns302WithLocationHeader() throws Exception {
+    void verify_validToken_returns200WithSuccessBody() throws Exception {
         doNothing().when(verificationService).verifyToken(anyString());
 
         mockMvc.perform(get("/api/v1/auth/verify").param("token", "valid-token"))
-                .andExpect(status().isFound())
-                .andExpect(header().string("Location", "http://localhost:3000"));
+                .andExpect(status().isOk());
     }
 
     // -------------------------------------------------------------------------
