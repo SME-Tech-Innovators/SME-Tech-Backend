@@ -41,6 +41,8 @@ app:
     from: ${APP_EMAIL_FROM}
   aws:
     region: ${AWS_REGION}
+    access-key: ${AWS_ACCESS_KEY_ID}
+    secret-key: ${AWS_SECRET_ACCESS_KEY}
 
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS}
