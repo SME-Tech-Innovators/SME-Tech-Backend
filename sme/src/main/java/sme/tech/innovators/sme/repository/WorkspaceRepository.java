@@ -9,8 +9,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface WorkspaceRepository extends JpaRepository<Workspace, UUID> {
-    Optional<Workspace> findByBusiness(Business business);
+    Optional<Workspace> findFirstByBusinessOrderByCreatedAtAsc(Business business);
     Optional<Workspace> findByIdAndBusiness_Owner_Id(UUID workspaceId, UUID ownerId);
     List<Workspace> findAllByBusiness_Owner_Id(UUID ownerId);
     boolean existsByPublicSlug(String publicSlug);
+    Optional<Workspace> findByPublicSlugIgnoreCase(String publicSlug);
 }

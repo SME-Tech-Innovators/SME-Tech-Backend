@@ -4,7 +4,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import software.amazon.awssdk.services.ses.SesClient;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import sme.tech.innovators.sme.config.TestAwsS3Config;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import sme.tech.innovators.sme.dto.request.BusinessRegistrationRequest;
@@ -23,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 })
 @ActiveProfiles("test")
 @Transactional
+@Import(TestAwsS3Config.class)
 class RegistrationServiceIntegrationTest {
 
     @Autowired
@@ -39,6 +44,12 @@ class RegistrationServiceIntegrationTest {
 
     @MockBean
     private SesClient sesClient;
+
+    @MockBean
+    private S3Client s3Client;
+
+    @MockBean
+    private S3Presigner s3Presigner;
 
     private RegistrationRequest buildRequest(String email, String businessName) {
         BusinessRegistrationRequest business = new BusinessRegistrationRequest();

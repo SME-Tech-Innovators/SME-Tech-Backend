@@ -6,6 +6,7 @@ import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 import sme.tech.innovators.sme.exception.SlugGenerationException;
 import sme.tech.innovators.sme.repository.BusinessRepository;
+import sme.tech.innovators.sme.repository.WorkspaceRepository;
 import sme.tech.innovators.sme.service.SlugGeneratorService;
 
 import java.util.List;
@@ -22,7 +23,8 @@ class SlugGeneratorServiceTest {
     @BeforeEach
     void setUp() {
         repo = Mockito.mock(BusinessRepository.class);
-        service = new SlugGeneratorService(repo);
+        WorkspaceRepository workspaceRepository = Mockito.mock(WorkspaceRepository.class);
+        service = new SlugGeneratorService(repo, workspaceRepository);
         ReflectionTestUtils.setField(service, "maxRetries", 5);
         ReflectionTestUtils.setField(service, "minLength", 3);
         ReflectionTestUtils.setField(service, "maxLength", 50);

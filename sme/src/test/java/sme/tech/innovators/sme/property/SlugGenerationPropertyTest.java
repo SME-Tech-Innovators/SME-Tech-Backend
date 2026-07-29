@@ -5,6 +5,7 @@ import net.jqwik.api.constraints.*;
 import org.junit.jupiter.api.Assertions;
 import org.mockito.Mockito;
 import sme.tech.innovators.sme.repository.BusinessRepository;
+import sme.tech.innovators.sme.repository.WorkspaceRepository;
 import sme.tech.innovators.sme.service.SlugGeneratorService;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -14,8 +15,9 @@ public class SlugGenerationPropertyTest {
 
     private SlugGeneratorService createService() {
         BusinessRepository repo = Mockito.mock(BusinessRepository.class);
+        WorkspaceRepository workspaceRepository = Mockito.mock(WorkspaceRepository.class);
         Mockito.when(repo.existsBySlugAndIsDeletedFalse(Mockito.anyString())).thenReturn(false);
-        SlugGeneratorService service = new SlugGeneratorService(repo);
+        SlugGeneratorService service = new SlugGeneratorService(repo, workspaceRepository);
         ReflectionTestUtils.setField(service, "maxRetries", 5);
         ReflectionTestUtils.setField(service, "minLength", 3);
         ReflectionTestUtils.setField(service, "maxLength", 50);

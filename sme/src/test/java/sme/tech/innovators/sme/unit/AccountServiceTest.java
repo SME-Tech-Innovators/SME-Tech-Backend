@@ -91,7 +91,7 @@ class AccountServiceTest {
     @Test
     void getProfile_returnsCorrectAccountProfileDto() {
         when(userRepository.findByIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user));
-        when(businessRepository.findByOwnerAndIsDeletedFalse(user)).thenReturn(Optional.of(business));
+        when(businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user)).thenReturn(Optional.of(business));
 
         AccountProfileDto dto = accountService.getProfile(userId);
 
@@ -118,7 +118,7 @@ class AccountServiceTest {
     @Test
     void getProfile_throwsInvalidTokenException_whenBusinessNotFound() {
         when(userRepository.findByIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user));
-        when(businessRepository.findByOwnerAndIsDeletedFalse(user)).thenReturn(Optional.empty());
+        when(businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user)).thenReturn(Optional.empty());
 
         assertThrows(InvalidTokenException.class, () -> accountService.getProfile(userId));
     }
@@ -134,7 +134,7 @@ class AccountServiceTest {
 
         when(userRepository.findByIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user));
         when(userRepository.save(user)).thenReturn(user);
-        when(businessRepository.findByOwnerAndIsDeletedFalse(user)).thenReturn(Optional.of(business));
+        when(businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user)).thenReturn(Optional.of(business));
 
         AccountProfileDto dto = accountService.updateProfile(userId, request);
 
@@ -151,7 +151,7 @@ class AccountServiceTest {
 
         when(userRepository.findByIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user));
         when(userRepository.save(any())).thenReturn(user);
-        when(businessRepository.findByOwnerAndIsDeletedFalse(user)).thenReturn(Optional.of(business));
+        when(businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user)).thenReturn(Optional.of(business));
 
         accountService.updateProfile(userId, request);
 
@@ -165,7 +165,7 @@ class AccountServiceTest {
 
         when(userRepository.findByIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user));
         when(userRepository.save(any())).thenReturn(user);
-        when(businessRepository.findByOwnerAndIsDeletedFalse(user)).thenReturn(Optional.of(business));
+        when(businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user)).thenReturn(Optional.of(business));
 
         AccountProfileDto dto = accountService.updateProfile(userId, request);
 
@@ -285,7 +285,7 @@ class AccountServiceTest {
         request.setName("New Business Name");
 
         when(userRepository.findByIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user));
-        when(businessRepository.findByOwnerAndIsDeletedFalse(user)).thenReturn(Optional.of(business));
+        when(businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user)).thenReturn(Optional.of(business));
         when(businessRepository.save(any())).thenReturn(business);
 
         AccountProfileDto dto = accountService.updateBusiness(userId, "OWNER", request);
@@ -302,7 +302,7 @@ class AccountServiceTest {
         request.setName("  Trimmed Name  ");
 
         when(userRepository.findByIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user));
-        when(businessRepository.findByOwnerAndIsDeletedFalse(user)).thenReturn(Optional.of(business));
+        when(businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user)).thenReturn(Optional.of(business));
         when(businessRepository.save(any())).thenReturn(business);
 
         accountService.updateBusiness(userId, "OWNER", request);
@@ -318,7 +318,7 @@ class AccountServiceTest {
         request.setName("A"); // 1 char — below minimum of 2
 
         when(userRepository.findByIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user));
-        when(businessRepository.findByOwnerAndIsDeletedFalse(user)).thenReturn(Optional.of(business));
+        when(businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user)).thenReturn(Optional.of(business));
 
         assertThrows(IllegalArgumentException.class,
                 () -> accountService.updateBusiness(userId, "OWNER", request));
@@ -330,7 +330,7 @@ class AccountServiceTest {
         request.setDescription("<script>alert('xss')</script><b>Bold</b> plain text");
 
         when(userRepository.findByIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user));
-        when(businessRepository.findByOwnerAndIsDeletedFalse(user)).thenReturn(Optional.of(business));
+        when(businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user)).thenReturn(Optional.of(business));
         when(businessRepository.save(any())).thenReturn(business);
 
         accountService.updateBusiness(userId, "OWNER", request);
@@ -352,7 +352,7 @@ class AccountServiceTest {
         request.setDescription("Updated description");
 
         when(userRepository.findByIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user));
-        when(businessRepository.findByOwnerAndIsDeletedFalse(user)).thenReturn(Optional.of(business));
+        when(businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user)).thenReturn(Optional.of(business));
         when(businessRepository.save(any())).thenReturn(business);
 
         accountService.updateBusiness(userId, "OWNER", request);
@@ -369,7 +369,7 @@ class AccountServiceTest {
         request.setName("Updated Name");
 
         when(userRepository.findByIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user));
-        when(businessRepository.findByOwnerAndIsDeletedFalse(user)).thenReturn(Optional.of(business));
+        when(businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user)).thenReturn(Optional.of(business));
         when(businessRepository.save(any())).thenReturn(business);
 
         accountService.updateBusiness(userId, "OWNER", request);
@@ -403,7 +403,7 @@ class AccountServiceTest {
         when(refreshTokenRepository.findAllByUserId(userId)).thenReturn(List.of());
         when(refreshTokenRepository.saveAll(any())).thenReturn(List.of());
         when(userRepository.save(any())).thenReturn(user);
-        when(businessRepository.findByOwnerAndIsDeletedFalse(user)).thenReturn(Optional.empty());
+        when(businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user)).thenReturn(Optional.empty());
 
         accountService.deleteAccount(userId, request);
 
@@ -423,7 +423,7 @@ class AccountServiceTest {
         when(refreshTokenRepository.findAllByUserId(userId)).thenReturn(List.of());
         when(refreshTokenRepository.saveAll(any())).thenReturn(List.of());
         when(userRepository.save(any())).thenReturn(user);
-        when(businessRepository.findByOwnerAndIsDeletedFalse(user)).thenReturn(Optional.of(business));
+        when(businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user)).thenReturn(Optional.of(business));
         when(businessRepository.save(any())).thenReturn(business);
 
         accountService.deleteAccount(userId, request);
@@ -447,7 +447,7 @@ class AccountServiceTest {
         when(refreshTokenRepository.findAllByUserId(userId)).thenReturn(List.of(token1, token2));
         when(refreshTokenRepository.saveAll(any())).thenReturn(List.of(token1, token2));
         when(userRepository.save(any())).thenReturn(user);
-        when(businessRepository.findByOwnerAndIsDeletedFalse(user)).thenReturn(Optional.empty());
+        when(businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user)).thenReturn(Optional.empty());
 
         accountService.deleteAccount(userId, request);
 
@@ -466,7 +466,7 @@ class AccountServiceTest {
         when(refreshTokenRepository.findAllByUserId(userId)).thenReturn(List.of());
         when(refreshTokenRepository.saveAll(any())).thenReturn(List.of());
         when(userRepository.save(any())).thenReturn(user);
-        when(businessRepository.findByOwnerAndIsDeletedFalse(user)).thenReturn(Optional.empty());
+        when(businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user)).thenReturn(Optional.empty());
 
         accountService.deleteAccount(userId, request);
 
@@ -483,7 +483,7 @@ class AccountServiceTest {
         when(refreshTokenRepository.findAllByUserId(userId)).thenReturn(List.of());
         when(refreshTokenRepository.saveAll(any())).thenReturn(List.of());
         when(userRepository.save(any())).thenReturn(user);
-        when(businessRepository.findByOwnerAndIsDeletedFalse(user)).thenReturn(Optional.of(business));
+        when(businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user)).thenReturn(Optional.of(business));
         when(businessRepository.save(any())).thenReturn(business);
 
         accountService.deleteAccount(userId, request);

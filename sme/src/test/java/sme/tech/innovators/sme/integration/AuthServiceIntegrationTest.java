@@ -5,7 +5,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import software.amazon.awssdk.services.ses.SesClient;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import sme.tech.innovators.sme.config.TestAwsS3Config;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -32,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
 })
 @ActiveProfiles("test")
 @Transactional
+@Import(TestAwsS3Config.class)
 class AuthServiceIntegrationTest {
 
     @Autowired private AuthService authService;
@@ -39,6 +44,8 @@ class AuthServiceIntegrationTest {
     @Autowired private RefreshTokenRepository refreshTokenRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @MockBean private SesClient sesClient;
+    @MockBean private S3Client s3Client;
+    @MockBean private S3Presigner s3Presigner;
 
     private User verifiedUser;
 

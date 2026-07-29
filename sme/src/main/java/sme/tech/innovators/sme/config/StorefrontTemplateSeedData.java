@@ -19,7 +19,8 @@ import java.util.Map;
 
 /**
  * Seeds the classic-boutique storefront template on application startup if not already present.
- * Runs once via ApplicationRunner — idempotent.
+ * Also refreshes supported_sections on existing versions so allowlist expansions ship without a
+ * manual DB migration.
  */
 @Slf4j
 @Component
@@ -32,11 +33,28 @@ public class StorefrontTemplateSeedData implements ApplicationRunner {
 
     private static final String CLASSIC_BOUTIQUE_ID = "classic-boutique";
 
+    /** Canonical section allowlist for classic-boutique (order matches frontend library). */
+    static final List<String> CLASSIC_BOUTIQUE_SUPPORTED_SECTIONS = List.of(
+            "hero",
+            "featuredProducts",
+            "newArrivals",
+            "shopByCategory",
+            "sale",
+            "promoBanner",
+            "textImage",
+            "features",
+            "testimonials",
+            "instagramGallery",
+            "newsletter",
+            "faq",
+            "contactCta"
+    );
+
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
         if (templateRepository.existsById(CLASSIC_BOUTIQUE_ID)) {
-            log.debug("StorefrontTemplate '{}' already exists — skipping seed", CLASSIC_BOUTIQUE_ID);
+            refreshSupportedSections();
             return;
         }
 
@@ -52,15 +70,6 @@ public class StorefrontTemplateSeedData implements ApplicationRunner {
         templateRepository.saveAndFlush(template);
 
         List<String> supportedThemes = List.of("blue", "red");
-        List<String> supportedSections = List.of(
-                "hero",
-                "featuredProducts",
-                "promoBanner",
-                "textImage",
-                "features",
-                "faq",
-                "contactCta"
-        );
 
         Map<String, Object> defaultConfig = buildDefaultConfig();
 
@@ -68,12 +77,29 @@ public class StorefrontTemplateSeedData implements ApplicationRunner {
                 .template(template)
                 .version(1)
                 .supportedThemes(supportedThemes)
-                .supportedSections(supportedSections)
+                .supportedSections(CLASSIC_BOUTIQUE_SUPPORTED_SECTIONS)
                 .defaultConfig(defaultConfig)
                 .build();
         templateVersionRepository.save(version);
 
         log.info("Seeded storefront template '{}' v1 successfully", CLASSIC_BOUTIQUE_ID);
+    }
+
+    /** Idempotent allowlist sync for already-seeded classic-boutique versions. */
+    private void refreshSupportedSections() {
+        templateVersionRepository.findByTemplateIdAndVersion(CLASSIC_BOUTIQUE_ID, 1)
+                .ifPresent(version -> {
+                    List<String> current = version.getSupportedSections();
+                    if (CLASSIC_BOUTIQUE_SUPPORTED_SECTIONS.equals(current)) {
+                        log.debug("StorefrontTemplate '{}' supported_sections already up to date",
+                                CLASSIC_BOUTIQUE_ID);
+                        return;
+                    }
+                    version.setSupportedSections(CLASSIC_BOUTIQUE_SUPPORTED_SECTIONS);
+                    templateVersionRepository.save(version);
+                    log.info("Updated storefront template '{}' v1 supported_sections: {}",
+                            CLASSIC_BOUTIQUE_ID, CLASSIC_BOUTIQUE_SUPPORTED_SECTIONS);
+                });
     }
 
     /**

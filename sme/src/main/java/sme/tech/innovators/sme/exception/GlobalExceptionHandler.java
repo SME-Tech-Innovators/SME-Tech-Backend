@@ -45,6 +45,144 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ErrorCodes.INVALID_STOREFRONT_CONFIG, ex.getMessage()));
     }
 
+    @ExceptionHandler(PublishConfirmationRequiredException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePublishConfirmationRequired(PublishConfirmationRequiredException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ErrorCodes.PUBLISH_CONFIRMATION_REQUIRED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(StorefrontDraftNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleStorefrontDraftNotFound(StorefrontDraftNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ErrorCodes.STOREFRONT_DRAFT_NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(PublishedStorefrontNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePublishedStorefrontNotFound(PublishedStorefrontNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ErrorCodes.PUBLISHED_STOREFRONT_NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidPublishConfigException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidPublishConfig(InvalidPublishConfigException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ErrorCodes.INVALID_PUBLISH_CONFIG, ex.getMessage()));
+    }
+
+    @ExceptionHandler(PublicSlugUnavailableException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePublicSlugUnavailable(PublicSlugUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(ErrorCodes.PUBLIC_SLUG_UNAVAILABLE, ex.getMessage()));
+    }
+
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleProductNotFound(ProductNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ErrorCodes.PRODUCT_NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(ProductSkuExistsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleProductSkuExists(ProductSkuExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(ErrorCodes.PRODUCT_SKU_EXISTS, ex.getMessage()));
+    }
+
+    @ExceptionHandler(ProductSlugExistsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleProductSlugExists(ProductSlugExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(ErrorCodes.PRODUCT_SLUG_EXISTS, ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidProductStatusException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidProductStatus(InvalidProductStatusException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ErrorCodes.INVALID_PRODUCT_STATUS, ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidProductPriceException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidProductPrice(InvalidProductPriceException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ErrorCodes.INVALID_PRODUCT_PRICE, ex.getMessage()));
+    }
+
+    @ExceptionHandler(CategoryNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleCategoryNotFound(CategoryNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ErrorCodes.CATEGORY_NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidProductDataException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidProductData(InvalidProductDataException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ErrorCodes.INVALID_PRODUCT_DATA, ex.getMessage()));
+    }
+
+    @ExceptionHandler(MediaNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMediaNotFound(MediaNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ErrorCodes.MEDIA_NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidMediaTypeException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidMediaType(InvalidMediaTypeException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ErrorCodes.INVALID_MEDIA_TYPE, ex.getMessage()));
+    }
+
+    @ExceptionHandler(MediaTooLargeException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMediaTooLarge(MediaTooLargeException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ErrorCodes.MEDIA_TOO_LARGE, ex.getMessage()));
+    }
+
+    @ExceptionHandler(UploadUrlFailedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUploadUrlFailed(UploadUrlFailedException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(ApiResponse.error(ErrorCodes.UPLOAD_URL_FAILED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(MediaNotReadyException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMediaNotReady(MediaNotReadyException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ErrorCodes.MEDIA_NOT_READY, ex.getMessage()));
+    }
+
+    @ExceptionHandler(MediaAlreadyDeletedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMediaAlreadyDeleted(MediaAlreadyDeletedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(ErrorCodes.MEDIA_ALREADY_DELETED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(StoreNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleStoreNotFound(StoreNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ErrorCodes.STORE_NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(StoreNotAvailableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleStoreNotAvailable(StoreNotAvailableException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error(ErrorCodes.STORE_NOT_AVAILABLE, ex.getMessage()));
+    }
+
+    @ExceptionHandler(PublicStorefrontNotPublishedException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePublicStorefrontNotPublished(PublicStorefrontNotPublishedException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ErrorCodes.PUBLIC_STOREFRONT_NOT_PUBLISHED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(PublicProductNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePublicProductNotFound(PublicProductNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ErrorCodes.PUBLIC_PRODUCT_NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(PublicPageNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePublicPageNotFound(PublicPageNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ErrorCodes.PUBLIC_PAGE_NOT_FOUND, ex.getMessage()));
+    }
+
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<Void>> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -125,6 +263,48 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining("; "));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error(ErrorCodes.VALIDATION_FAILED, message));
+    }
+
+    @ExceptionHandler(CartNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleCartNotFound(CartNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ErrorCodes.CART_NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(CartItemNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleCartItemNotFound(CartItemNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ErrorCodes.CART_ITEM_NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(CartEmptyException.class)
+    public ResponseEntity<ApiResponse<Void>> handleCartEmpty(CartEmptyException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ErrorCodes.CART_EMPTY, ex.getMessage()));
+    }
+
+    @ExceptionHandler(ProductNotAvailableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleProductNotAvailable(ProductNotAvailableException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ApiResponse.error(ErrorCodes.PRODUCT_NOT_AVAILABLE, ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidQuantityException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidQuantity(InvalidQuantityException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ErrorCodes.INVALID_QUANTITY, ex.getMessage()));
+    }
+
+    @ExceptionHandler(CheckoutValidationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleCheckoutValidation(CheckoutValidationException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ApiResponse.error(ErrorCodes.CHECKOUT_VALIDATION_ERROR, ex.getMessage()));
+    }
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOrderNotFound(OrderNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ErrorCodes.ORDER_NOT_FOUND, ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

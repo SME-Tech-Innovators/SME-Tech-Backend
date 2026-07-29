@@ -427,6 +427,7 @@ All workspace endpoints require a valid JWT Bearer token. A workspace is auto-cr
 - The `templateId` must exist and not be `DISABLED`.
 - The `templateVersion` must exist for that template.
 - The `config` sections must be a subset of the template version's `supportedSections`.
+- classic-boutique `supportedSections`: `hero`, `featuredProducts`, `newArrivals`, `shopByCategory`, `sale`, `promoBanner`, `textImage`, `features`, `testimonials`, `instagramGallery`, `newsletter`, `faq`, `contactCta`.
 - The `config` theme must be one of the template version's `supportedThemes`.
 
 ---
