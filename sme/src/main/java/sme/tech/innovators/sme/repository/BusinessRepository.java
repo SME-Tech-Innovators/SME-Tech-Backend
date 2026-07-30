@@ -11,7 +11,11 @@ import java.util.UUID;
 public interface BusinessRepository extends JpaRepository<Business, UUID> {
     boolean existsBySlugAndIsDeletedFalse(String slug);
     Optional<Business> findBySlugAndIsDeletedFalse(String slug);
-    Optional<Business> findByOwnerAndIsDeletedFalse(User owner);
+    /**
+     * Use findFirst… because legacy/test data may contain more than one business
+     * per owner, which breaks Optional unique-result queries.
+     */
+    Optional<Business> findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(User owner);
     List<Business> findAllByOwnerId(UUID ownerId);
     List<Business> findAllByIsDeletedFalse();
 }

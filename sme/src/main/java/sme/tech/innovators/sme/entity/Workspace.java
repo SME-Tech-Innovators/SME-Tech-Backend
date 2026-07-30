@@ -38,6 +38,16 @@ public class Workspace {
     @Column(nullable = false, length = 50)
     private WorkspaceStatus status = WorkspaceStatus.DRAFT;
 
+    @Column(name = "seo_title", length = 255)
+    private String seoTitle;
+
+    @Column(name = "seo_description", length = 1000)
+    private String seoDescription;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seo_image_id")
+    private MediaAsset seoImage;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

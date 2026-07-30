@@ -4,9 +4,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
 import software.amazon.awssdk.services.ses.SesClient;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import sme.tech.innovators.sme.config.TestAwsS3Config;
 import org.springframework.test.context.ActiveProfiles;
 import sme.tech.innovators.sme.repository.UserRepository;
 import sme.tech.innovators.sme.repository.VerificationTokenRepository;
@@ -17,12 +21,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@Import(TestAwsS3Config.class)
 class RegistrationE2ETest {
 
     @Autowired private TestRestTemplate restTemplate;
     @Autowired private UserRepository userRepository;
     @Autowired private VerificationTokenRepository verificationTokenRepository;
     @MockBean private SesClient sesClient;
+    @MockBean private S3Client s3Client;
+    @MockBean private S3Presigner s3Presigner;
 
     @Test
     void registerReturns201WithApiResponseEnvelope() {

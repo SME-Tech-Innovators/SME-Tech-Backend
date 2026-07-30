@@ -1,18 +1,24 @@
 package sme.tech.innovators.sme.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sme.tech.innovators.sme.dto.request.PublishStorefrontRequest;
 import sme.tech.innovators.sme.dto.request.ResetStorefrontDraftRequest;
 import sme.tech.innovators.sme.dto.request.UpdateStorefrontDraftRequest;
-import sme.tech.innovators.sme.dto.response.StorefrontDraftDto;
-import sme.tech.innovators.sme.dto.response.WorkspaceDto;
+import sme.tech.innovators.sme.dto.response.*;
 import sme.tech.innovators.sme.entity.*;
 import sme.tech.innovators.sme.exception.*;
 import sme.tech.innovators.sme.repository.*;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -27,18 +33,13 @@ public class WorkspaceService {
     private final StorefrontRepository storefrontRepository;
     private final StorefrontTemplateRepository templateRepository;
     private final StorefrontTemplateVersionRepository templateVersionRepository;
+    private final StorefrontPublishSnapshotRepository publishSnapshotRepository;
     private final BusinessRepository businessRepository;
     private final UserRepository userRepository;
     private final StorefrontConfigValidator configValidator;
+    private final SlugGeneratorService slugGeneratorService;
+    private final ObjectMapper objectMapper;
 
-    // -------------------------------------------------------------------------
-    // Workspace APIs
-    // -------------------------------------------------------------------------
-
-    /**
-     * Returns all workspaces owned by the authenticated user.
-     * Auto-creates a workspace for the user's business if one doesn't exist yet.
-     */
     @Transactional
     public List<WorkspaceDto> getWorkspacesForUser(UUID userId) {
         Business business = loadBusinessForUser(userId);
@@ -49,33 +50,17 @@ public class WorkspaceService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Returns a single workspace by ID, enforcing that the authenticated user owns it.
-     */
     @Transactional(readOnly = true)
     public WorkspaceDto getWorkspace(UUID workspaceId, UUID userId) {
-        Workspace workspace = loadOwnedWorkspace(workspaceId, userId);
-        return toWorkspaceDto(workspace);
+        return toWorkspaceDto(loadOwnedWorkspace(workspaceId, userId));
     }
 
-    // -------------------------------------------------------------------------
-    // Storefront Draft APIs
-    // -------------------------------------------------------------------------
-
-    /**
-     * Returns the storefront draft for the workspace.
-     * Auto-creates the storefront from classic-boutique if it doesn't exist yet.
-     */
     @Transactional
     public StorefrontDraftDto getStorefrontDraft(UUID workspaceId, UUID userId) {
         Workspace workspace = loadOwnedWorkspace(workspaceId, userId);
-        Storefront storefront = ensureStorefrontExists(workspace);
-        return toStorefrontDraftDto(storefront);
+        return toStorefrontDraftDto(ensureStorefrontExists(workspace));
     }
 
-    /**
-     * Replaces the full draft config, validating it against the template before saving.
-     */
     @Transactional
     public StorefrontDraftDto updateStorefrontDraft(UUID workspaceId,
                                                      UUID userId,
@@ -83,11 +68,9 @@ public class WorkspaceService {
         Workspace workspace = loadOwnedWorkspace(workspaceId, userId);
         Storefront storefront = ensureStorefrontExists(workspace);
 
-        // Validate template + version
         StorefrontTemplateVersion templateVersion = loadAndValidateTemplateVersion(
                 request.getTemplateId(), request.getTemplateVersion());
 
-        // Validate the config itself
         configValidator.validate(
                 request.getConfig(),
                 templateVersion.getSupportedSections(),
@@ -104,9 +87,6 @@ public class WorkspaceService {
         return toStorefrontDraftDto(storefront);
     }
 
-    /**
-     * Resets the draft config back to the template's default config.
-     */
     @Transactional
     public StorefrontDraftDto resetStorefrontDraft(UUID workspaceId,
                                                     UUID userId,
@@ -128,36 +108,181 @@ public class WorkspaceService {
         return toStorefrontDraftDto(storefront);
     }
 
-    // -------------------------------------------------------------------------
-    // Private helpers
-    // -------------------------------------------------------------------------
+    @Transactional
+    @CacheEvict(value = "publicStorefront", allEntries = true)
+    public PublishResultDto publishStorefront(UUID workspaceId,
+                                               UUID userId,
+                                               PublishStorefrontRequest request) {
+        if (request.getConfirm() == null || !request.getConfirm()) {
+            throw new PublishConfirmationRequiredException("Publishing requires confirm=true");
+        }
 
-    /**
-     * Loads the business owned by the given user, throwing WorkspaceNotFoundException
-     * if the user has no active business.
-     */
+        User user = userRepository.findByIdAndIsDeletedFalse(userId)
+                .orElseThrow(() -> new WorkspaceNotFoundException("User not found"));
+        Workspace workspace = loadOwnedWorkspace(workspaceId, userId);
+        Storefront storefront = storefrontRepository.findByWorkspace(workspace)
+                .orElseThrow(() -> new StorefrontNotFoundException(
+                        "Storefront not found for workspace " + workspaceId));
+
+        if (storefront.getDraftConfig() == null || storefront.getDraftConfig().isEmpty()) {
+            throw new StorefrontDraftNotFoundException(
+                    "Draft config is missing. Save a draft before publishing.");
+        }
+
+        StorefrontTemplateVersion templateVersion = loadAndValidateTemplateVersion(
+                storefront.getTemplateId(), storefront.getTemplateVersion());
+
+        if (templateVersion.getTemplate().getStatus() != StorefrontTemplateStatus.AVAILABLE) {
+            throw new TemplateDisabledException(
+                    "Template '" + storefront.getTemplateId() + "' is not available for publishing");
+        }
+
+        configValidator.validateForPublish(
+                storefront.getDraftConfig(),
+                templateVersion.getSupportedSections(),
+                templateVersion.getSupportedThemes()
+        );
+
+        ensurePublicSlug(workspace);
+
+        Map<String, Object> snapshotConfig = deepCopyConfig(storefront.getDraftConfig());
+        LocalDateTime publishedAt = LocalDateTime.now();
+
+        StorefrontPublishSnapshot snapshot = StorefrontPublishSnapshot.builder()
+                .storefront(storefront)
+                .workspace(workspace)
+                .templateId(storefront.getTemplateId())
+                .templateVersion(storefront.getTemplateVersion())
+                .config(snapshotConfig)
+                .configVersion(storefront.getDraftConfigVersion())
+                .publishedBy(user)
+                .publishedAt(publishedAt)
+                .notes(request.getNotes())
+                .build();
+        snapshot = publishSnapshotRepository.save(snapshot);
+
+        storefront.setPublishedSnapshotId(snapshot.getId());
+        storefront.setLastPublishedAt(publishedAt);
+        storefrontRepository.save(storefront);
+
+        workspace.setStatus(WorkspaceStatus.LIVE);
+        workspaceRepository.save(workspace);
+
+        log.info("Published storefront snapshot={} for workspace={}", snapshot.getId(), workspaceId);
+
+        return PublishResultDto.builder()
+                .workspaceId(workspace.getId())
+                .storefrontId(storefront.getId())
+                .publishedSnapshotId(snapshot.getId())
+                .status(workspace.getStatus())
+                .publishedAt(publishedAt)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public PublishedStorefrontDto getPublishedStorefront(UUID workspaceId, UUID userId) {
+        Workspace workspace = loadOwnedWorkspace(workspaceId, userId);
+        Storefront storefront = storefrontRepository.findByWorkspace(workspace)
+                .orElseThrow(() -> new StorefrontNotFoundException(
+                        "Storefront not found for workspace " + workspaceId));
+
+        if (storefront.getPublishedSnapshotId() == null) {
+            throw new PublishedStorefrontNotFoundException(
+                    "No published storefront found for this workspace");
+        }
+
+        StorefrontPublishSnapshot snapshot = publishSnapshotRepository
+                .findById(storefront.getPublishedSnapshotId())
+                .orElseThrow(() -> new PublishedStorefrontNotFoundException(
+                        "Published snapshot not found"));
+
+        return toPublishedStorefrontDto(workspace, storefront, snapshot);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PublishHistoryItemDto> getPublishHistory(UUID workspaceId, UUID userId) {
+        loadOwnedWorkspace(workspaceId, userId);
+        return publishSnapshotRepository.findByWorkspaceIdOrderByPublishedAtDesc(workspaceId)
+                .stream()
+                .map(this::toPublishHistoryItemDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public PublishedStorefrontDto getPublishSnapshot(UUID workspaceId,
+                                                      UUID snapshotId,
+                                                      UUID userId) {
+        Workspace workspace = loadOwnedWorkspace(workspaceId, userId);
+        Storefront storefront = storefrontRepository.findByWorkspace(workspace)
+                .orElseThrow(() -> new StorefrontNotFoundException(
+                        "Storefront not found for workspace " + workspaceId));
+
+        StorefrontPublishSnapshot snapshot = publishSnapshotRepository
+                .findByIdAndWorkspaceId(snapshotId, workspaceId)
+                .orElseThrow(() -> new PublishedStorefrontNotFoundException(
+                        "Publish snapshot not found: " + snapshotId));
+
+        return toPublishedStorefrontDto(workspace, storefront, snapshot);
+    }
+
+    @Transactional
+    @CacheEvict(value = "publicStorefront", allEntries = true)
+    public UnpublishResultDto unpublishStorefront(UUID workspaceId, UUID userId) {
+        Workspace workspace = loadOwnedWorkspace(workspaceId, userId);
+        Storefront storefront = storefrontRepository.findByWorkspace(workspace)
+                .orElseThrow(() -> new StorefrontNotFoundException(
+                        "Storefront not found for workspace " + workspaceId));
+
+        if (storefront.getPublishedSnapshotId() == null) {
+            throw new PublishedStorefrontNotFoundException(
+                    "Cannot unpublish: no published snapshot exists");
+        }
+
+        workspace.setStatus(WorkspaceStatus.UNPUBLISHED);
+        workspaceRepository.save(workspace);
+
+        log.info("Unpublished storefront for workspace={}", workspaceId);
+
+        return UnpublishResultDto.builder()
+                .workspaceId(workspace.getId())
+                .status(workspace.getStatus())
+                .lastPublishedAt(storefront.getLastPublishedAt())
+                .build();
+    }
+
+    private void ensurePublicSlug(Workspace workspace) {
+        if (workspace.getPublicSlug() != null && !workspace.getPublicSlug().isBlank()) {
+            return;
+        }
+        String sourceName = workspace.getName() != null && !workspace.getName().isBlank()
+                ? workspace.getName()
+                : workspace.getBusiness().getName();
+        String slug = slugGeneratorService.generateUniquePublicSlug(sourceName);
+        workspace.setPublicSlug(slug);
+        workspaceRepository.save(workspace);
+        log.info("Assigned publicSlug={} to workspace={}", slug, workspace.getId());
+    }
+
+    private Map<String, Object> deepCopyConfig(Map<String, Object> config) {
+        return objectMapper.convertValue(config, new TypeReference<HashMap<String, Object>>() {});
+    }
+
     private Business loadBusinessForUser(UUID userId) {
         User user = userRepository.findByIdAndIsDeletedFalse(userId)
                 .orElseThrow(() -> new WorkspaceNotFoundException("User not found"));
-        return businessRepository.findByOwnerAndIsDeletedFalse(user)
+        return businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user)
                 .orElseThrow(() -> new WorkspaceNotFoundException(
                         "No active business found for this account"));
     }
 
-    /**
-     * Loads a workspace ensuring the authenticated user owns it.
-     */
     private Workspace loadOwnedWorkspace(UUID workspaceId, UUID userId) {
         return workspaceRepository.findByIdAndBusiness_Owner_Id(workspaceId, userId)
                 .orElseThrow(() -> new WorkspaceNotFoundException(
                         "Workspace not found or you do not have access to it"));
     }
 
-    /**
-     * Auto-creates a workspace for the business if one doesn't exist yet.
-     */
     private Workspace ensureWorkspaceExists(Business business) {
-        return workspaceRepository.findByBusiness(business)
+        return workspaceRepository.findFirstByBusinessOrderByCreatedAtAsc(business)
                 .orElseGet(() -> {
                     log.info("Auto-creating workspace for business={}", business.getId());
                     Workspace workspace = Workspace.builder()
@@ -169,9 +294,6 @@ public class WorkspaceService {
                 });
     }
 
-    /**
-     * Auto-creates a storefront from classic-boutique if one doesn't exist yet.
-     */
     private Storefront ensureStorefrontExists(Workspace workspace) {
         return storefrontRepository.findByWorkspace(workspace)
                 .orElseGet(() -> {
@@ -193,10 +315,6 @@ public class WorkspaceService {
                 });
     }
 
-    /**
-     * Loads and validates a template + version, throwing meaningful errors
-     * if the template doesn't exist, is disabled, or the version doesn't exist.
-     */
     private StorefrontTemplateVersion loadAndValidateTemplateVersion(String templateId,
                                                                       Integer version) {
         StorefrontTemplate template = templateRepository.findById(templateId)
@@ -212,10 +330,6 @@ public class WorkspaceService {
                 .orElseThrow(() -> new TemplateNotFoundException(
                         "Template '" + templateId + "' version " + version + " does not exist"));
     }
-
-    // -------------------------------------------------------------------------
-    // Mappers
-    // -------------------------------------------------------------------------
 
     private WorkspaceDto toWorkspaceDto(Workspace workspace) {
         return WorkspaceDto.builder()
@@ -238,6 +352,36 @@ public class WorkspaceService {
                 .configVersion(storefront.getDraftConfigVersion())
                 .config(storefront.getDraftConfig())
                 .updatedAt(storefront.getUpdatedAt())
+                .build();
+    }
+
+    private PublishedStorefrontDto toPublishedStorefrontDto(Workspace workspace,
+                                                             Storefront storefront,
+                                                             StorefrontPublishSnapshot snapshot) {
+        return PublishedStorefrontDto.builder()
+                .workspaceId(workspace.getId())
+                .storefrontId(storefront.getId())
+                .publishedSnapshotId(snapshot.getId())
+                .templateId(snapshot.getTemplateId())
+                .templateVersion(snapshot.getTemplateVersion())
+                .configVersion(snapshot.getConfigVersion())
+                .config(snapshot.getConfig())
+                .status(workspace.getStatus())
+                .publicSlug(workspace.getPublicSlug())
+                .publishedAt(snapshot.getPublishedAt())
+                .notes(snapshot.getNotes())
+                .build();
+    }
+
+    private PublishHistoryItemDto toPublishHistoryItemDto(StorefrontPublishSnapshot snapshot) {
+        return PublishHistoryItemDto.builder()
+                .snapshotId(snapshot.getId())
+                .templateId(snapshot.getTemplateId())
+                .templateVersion(snapshot.getTemplateVersion())
+                .configVersion(snapshot.getConfigVersion())
+                .publishedByUserId(snapshot.getPublishedBy().getId())
+                .publishedAt(snapshot.getPublishedAt())
+                .notes(snapshot.getNotes())
                 .build();
     }
 }

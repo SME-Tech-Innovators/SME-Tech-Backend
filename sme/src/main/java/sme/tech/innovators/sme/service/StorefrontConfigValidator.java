@@ -1,6 +1,7 @@
 package sme.tech.innovators.sme.service;
 
 import org.springframework.stereotype.Component;
+import sme.tech.innovators.sme.exception.InvalidPublishConfigException;
 import sme.tech.innovators.sme.exception.InvalidStorefrontConfigException;
 
 import java.util.List;
@@ -33,6 +34,38 @@ public class StorefrontConfigValidator {
         validateSections(config, supportedSections);
         validatePages(config);
         validateTheme(config, supportedThemes);
+    }
+
+    /**
+     * Stricter validation used before creating a publish snapshot.
+     * Requires shopName and themeId in addition to draft rules.
+     */
+    public void validateForPublish(Map<String, Object> config,
+                                   List<String> supportedSections,
+                                   List<String> supportedThemes) {
+        if (config == null || config.isEmpty()) {
+            throw new InvalidPublishConfigException("Draft config is required before publishing");
+        }
+
+        try {
+            validate(config, supportedSections, supportedThemes);
+        } catch (InvalidStorefrontConfigException ex) {
+            throw new InvalidPublishConfigException(ex.getMessage());
+        }
+
+        Object shopName = config.get("shopName");
+        if (shopName == null || shopName.toString().isBlank()) {
+            throw new InvalidPublishConfigException("shopName is required before publishing");
+        }
+
+        Object themeId = config.get("themeId");
+        if (themeId == null || themeId.toString().isBlank()) {
+            throw new InvalidPublishConfigException("themeId is required before publishing");
+        }
+        if (!supportedThemes.contains(themeId.toString())) {
+            throw new InvalidPublishConfigException(
+                    "Unsupported themeId '" + themeId + "'. Supported themes: " + supportedThemes);
+        }
     }
 
     // -------------------------------------------------------------------------

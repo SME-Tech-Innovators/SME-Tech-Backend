@@ -43,6 +43,12 @@ app:
     region: ${AWS_REGION}
     access-key: ${AWS_ACCESS_KEY_ID}
     secret-key: ${AWS_SECRET_ACCESS_KEY}
+    s3:
+      bucket: ${AWS_S3_BUCKET}
+      default-folder: ${AWS_S3_DEFAULT_FOLDER:workspaces}
+      base-url: ${AWS_S3_BASE_URL:}
+      max-size-bytes: ${AWS_S3_MAX_SIZE_BYTES:5242880}
+      upload-url-expiry-minutes: ${AWS_S3_UPLOAD_URL_EXPIRY_MINUTES:15}
 
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS}
@@ -113,6 +119,14 @@ app:
     from: test@example.com
   aws:
     region: us-east-1
+    access-key: test
+    secret-key: test
+    s3:
+      bucket: test-bucket
+      default-folder: workspaces
+      base-url: https://test-bucket.s3.us-east-1.amazonaws.com
+      max-size-bytes: 5242880
+      upload-url-expiry-minutes: 15
   cors:
     allowed-origins: http://localhost:3000
   slug:

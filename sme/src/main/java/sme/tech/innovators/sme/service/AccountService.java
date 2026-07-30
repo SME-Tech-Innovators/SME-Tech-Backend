@@ -150,7 +150,7 @@ public class AccountService {
                 "userId=" + userId);
 
         // Soft-delete the business if it exists and no other admin can take over
-        businessRepository.findByOwnerAndIsDeletedFalse(user).ifPresent(business -> {
+        businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user).ifPresent(business -> {
             business.setDeleted(true);
             business.setDeletedAt(LocalDateTime.now());
             businessRepository.save(business);
@@ -177,7 +177,7 @@ public class AccountService {
      * InvalidTokenException if no active business is found.
      */
     private Business loadBusinessForUser(User user) {
-        return businessRepository.findByOwnerAndIsDeletedFalse(user)
+        return businessRepository.findFirstByOwnerAndIsDeletedFalseOrderByCreatedAtAsc(user)
                 .orElseThrow(() -> new InvalidTokenException("No active business found for this account"));
     }
 
