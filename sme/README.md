@@ -305,7 +305,7 @@ The Swagger UI exposes a server selector with the following environments:
 | `POST` | `/register` | None | Register a new user and business. Rate limited: 5/hour per IP, 3/hour per email. |
 | `GET` | `/verify` | None | Verify email address using the token from the verification email. Returns HTTP 200 with `ApiResponse` envelope on success; HTTP 400/404 on invalid or expired token. |
 | `POST` | `/resend-verification` | None | Resend the verification email for a pending account. |
-| `POST` | `/login` | None | Authenticate and receive a JWT access token (15 min) + refresh token (7 days). |
+| `POST` | `/login` | None | Authenticate and receive a JWT access token (24 hours) + refresh token (7 days). |
 | `POST` | `/refresh` | None | Exchange a valid refresh token for a new access token. |
 | `POST` | `/logout` | Bearer | Revoke the current refresh token. |
 

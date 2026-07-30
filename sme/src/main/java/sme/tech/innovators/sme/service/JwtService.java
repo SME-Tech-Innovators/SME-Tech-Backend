@@ -20,7 +20,7 @@ public class JwtService {
     @Value("${app.jwt.secret}")
     private String secret;
 
-    @Value("${app.jwt.access-token-expiry-minutes:15}")
+    @Value("${app.jwt.access-token-expiry-minutes:1440}")
     private int expiryMinutes;
 
     private SecretKey getSigningKey() {
