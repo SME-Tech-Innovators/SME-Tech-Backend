@@ -16,5 +16,6 @@ public class StorefrontDraftDto {
     private Integer templateVersion;
     private Integer configVersion;
     private Map<String, Object> config;
+    private LocalDateTime templateSetupCompletedAt;
     private LocalDateTime updatedAt;
 }

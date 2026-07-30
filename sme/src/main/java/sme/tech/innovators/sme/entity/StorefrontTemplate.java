@@ -27,6 +27,10 @@ public class StorefrontTemplate {
     @Column(nullable = false, length = 1000)
     private String description;
 
+    /** Short marketing vibe label for the picker, e.g. "Editorial retail". */
+    @Column(length = 255)
+    private String vibe;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private StorefrontTemplateStatus status;
