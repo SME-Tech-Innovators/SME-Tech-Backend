@@ -19,7 +19,7 @@ public class JwtPropertyTest {
         JwtService service = new JwtService();
         ReflectionTestUtils.setField(service, "secret",
                 "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970");
-        ReflectionTestUtils.setField(service, "expiryMinutes", 15);
+        ReflectionTestUtils.setField(service, "expiryMinutes", 1440);
         return service;
     }
 
@@ -36,16 +36,16 @@ public class JwtPropertyTest {
     }
 
     @Property(tries = 20)
-    void accessTokenExpiresIn15Minutes(@ForAll("users") User user) {
+    void accessTokenExpiresIn24Hours(@ForAll("users") User user) {
         JwtService jwtService = createJwtService();
         long before = System.currentTimeMillis();
         String token = jwtService.generateAccessToken(user);
         Claims claims = jwtService.extractClaims(token);
         Date expiration = claims.getExpiration();
 
-        long expectedExpiry = before + 15L * 60 * 1000;
+        long expectedExpiry = before + 1440L * 60 * 1000;
         long delta = Math.abs(expiration.getTime() - expectedExpiry);
-        Assertions.assertTrue(delta < 5000, "Token expiry not within 5s of 15 minutes: delta=" + delta);
+        Assertions.assertTrue(delta < 5000, "Token expiry not within 5s of 24 hours: delta=" + delta);
     }
 
     @Provide

@@ -76,7 +76,7 @@ public class AuthController {
     }
 
     @Operation(summary = "Login",
-               description = "Authenticates a verified user and returns a JWT access token (15 min) and refresh token (7 days).")
+               description = "Authenticates a verified user and returns a JWT access token (24 hours) and refresh token (7 days).")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Login successful"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Invalid credentials"),
