@@ -28,10 +28,7 @@ public class OpenApiConfig {
                                 .email("smetechinnovators@gmail.com")))
                 .servers(List.of(
                         new Server().url("http://localhost:8080").description("Local Development"),
-                        new Server().url("https://tech-innovators-behmcxdbhtb3arap.austriaeast-01.azurewebsites.net").description("tech-innovators (Austria)"),
-                        new Server().url("https://sme-tech-brdyghahdgcab3a2.brazilsouth-01.azurewebsites.net").description("sme-tech (Brazil)"),
-                        new Server().url("https://sme-operations-dza7e5czhdggexfh.canadacentral-01.azurewebsites.net").description("sme-operations (Canada)"),
-                        new Server().url("https://innovators-d2b3gycthabmdnhj.southafricanorth-01.azurewebsites.net").description("innovators (South Africa)")))
+                        new Server().url("https://sme-operations-gpgudcaud8bddgdu.canadacentral-01.azurewebsites.net").description("sme-operations (Canada)")))
                 .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
                 .components(new Components()
                         .addSecuritySchemes("Bearer Authentication", new SecurityScheme()

@@ -43,7 +43,7 @@ class EmailServiceTest {
     @BeforeEach
     void setUp() {
         // Inject @Value fields that would normally be bound by Spring
-        ReflectionTestUtils.setField(emailService, "baseUrl", "http://localhost:8080");
+        ReflectionTestUtils.setField(emailService, "frontendUrl", "http://localhost:8080");
         ReflectionTestUtils.setField(emailService, "fromEmail", "noreply@example.com");
         ReflectionTestUtils.setField(emailService, "senderName", "SME Operations");
     }
@@ -68,7 +68,7 @@ class EmailServiceTest {
         SendEmailRequest captured = captor.getValue();
 
         String textBody = captured.message().body().text().data();
-        String expectedLink = "http://localhost:8080/api/v1/auth/verify?token=abc123";
+        String expectedLink = "http://localhost:8080/verify?token=abc123";
 
         assertTrue(textBody.contains(expectedLink),
                 "Plain-text body should contain the verification link: " + expectedLink

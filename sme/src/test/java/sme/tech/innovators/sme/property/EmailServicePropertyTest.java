@@ -36,7 +36,7 @@ public class EmailServicePropertyTest {
 
     private EmailService buildEmailService(SesClient sesClient, AuditService auditService) {
         EmailService service = new EmailService(sesClient, auditService);
-        ReflectionTestUtils.setField(service, "baseUrl", BASE_URL);
+        ReflectionTestUtils.setField(service, "frontendUrl", BASE_URL);
         ReflectionTestUtils.setField(service, "fromEmail", FROM_EMAIL);
         ReflectionTestUtils.setField(service, "senderName", SENDER_NAME);
         return service;
@@ -73,7 +73,7 @@ public class EmailServicePropertyTest {
 
         verify(sesClient).sendEmail(captor.capture());
         String textBody = captor.getValue().message().body().text().data();
-        String expectedLink = BASE_URL + "/api/v1/auth/verify?token=" + token;
+        String expectedLink = BASE_URL + "/verify?token=" + token;
 
         assertTrue(textBody.contains(expectedLink),
                 "Plain-text body must contain verification link.\nExpected: " + expectedLink

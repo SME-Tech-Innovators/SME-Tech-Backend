@@ -14,10 +14,14 @@ public class AwsSesConfig {
     @Value("${app.aws.region}")
     private String awsRegion;
 
+    @Value("${app.aws.access-key}")
+    String accessKey;
+
+    @Value("${app.aws.secret-key}")
+    String secretKey;
+
     @Bean
     public SesClient sesClient() {
-        String accessKey = System.getenv("AWS_ACCESS_KEY_ID");
-        String secretKey = System.getenv("AWS_SECRET_ACCESS_KEY");
 
         if (accessKey == null || accessKey.isBlank()) {
             throw new IllegalStateException(
