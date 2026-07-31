@@ -14,6 +14,8 @@ import software.amazon.awssdk.services.ses.model.SesException;
 import sme.tech.innovators.sme.service.AuditService;
 import sme.tech.innovators.sme.service.EmailService;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -167,5 +169,27 @@ class EmailServiceTest {
         assertTrue(text.contains("Tee × 2"));
         assertTrue(text.contains("/s/bridge-labs"));
         assertTrue(text.contains("Payment status: paid"));
+    }
+
+    @Test
+    void sendOutOfStockEmail_includesProductAndInventoryLink() {
+        ArgumentCaptor<SendEmailRequest> captor = ArgumentCaptor.forClass(SendEmailRequest.class);
+        UUID workspaceId = UUID.randomUUID();
+
+        emailService.sendOutOfStockEmail(
+                "merchant@example.com",
+                "Mona",
+                "Classic Tee",
+                "TEE-1",
+                "Something Good",
+                workspaceId);
+
+        verify(sesClient).sendEmail(captor.capture());
+        SendEmailRequest captured = captor.getValue();
+        assertTrue(captured.message().subject().data().contains("Out of stock: Classic Tee"));
+        String text = captured.message().body().text().data();
+        assertTrue(text.contains("SKU: TEE-1"));
+        assertTrue(text.contains("quantity available: 0"));
+        assertTrue(text.contains("/workspaces/" + workspaceId + "/products"));
     }
 }

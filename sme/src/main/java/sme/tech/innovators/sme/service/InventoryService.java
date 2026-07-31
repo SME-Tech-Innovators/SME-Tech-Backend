@@ -15,6 +15,7 @@ import java.util.UUID;
 /**
  * Hard-stock decrement / restock for paid orders. Idempotent via {@code order.inventoryDecremented}.
  * Stock lines are read from {@code order_items} via native SQL so LAZY associations cannot skip work.
+ * When a line reaches quantity 0, schedules a one-shot merchant out-of-stock email.
  */
 @Slf4j
 @Service
@@ -23,6 +24,7 @@ public class InventoryService {
 
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
+    private final OutOfStockMailer outOfStockMailer;
 
     @Transactional
     public void decrementForPaidOrder(Order order) {
@@ -65,6 +67,7 @@ public class InventoryService {
                 throw new InsufficientStockException(
                         "Not enough stock for this product.", null);
             }
+            outOfStockMailer.notifyIfSoldOut(productId);
         }
 
         order.setInventoryDecremented(true);

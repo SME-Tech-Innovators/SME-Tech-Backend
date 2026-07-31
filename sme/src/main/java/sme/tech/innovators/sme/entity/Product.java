@@ -65,6 +65,13 @@ public class Product {
     @Builder.Default
     private Integer quantityAvailable = 999;
 
+    /**
+     * Set when a merchant out-of-stock email is sent for the current sold-out episode.
+     * Cleared when {@link #quantityAvailable} goes back above 0 so the next sell-out can notify again.
+     */
+    @Column(name = "out_of_stock_notified_at")
+    private LocalDateTime outOfStockNotifiedAt;
+
     @Enumerated(EnumType.STRING)
     @Builder.Default
     @Column(nullable = false, length = 20)

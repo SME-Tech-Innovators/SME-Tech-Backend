@@ -10,6 +10,7 @@ import sme.tech.innovators.sme.exception.InsufficientStockException;
 import sme.tech.innovators.sme.repository.OrderRepository;
 import sme.tech.innovators.sme.repository.ProductRepository;
 import sme.tech.innovators.sme.service.InventoryService;
+import sme.tech.innovators.sme.service.OutOfStockMailer;
 
 import java.util.List;
 import java.util.UUID;
@@ -25,12 +26,13 @@ class InventoryServiceTest {
 
     @Mock ProductRepository productRepository;
     @Mock OrderRepository orderRepository;
+    @Mock OutOfStockMailer outOfStockMailer;
 
     private InventoryService inventoryService;
 
     @BeforeEach
     void setUp() {
-        inventoryService = new InventoryService(productRepository, orderRepository);
+        inventoryService = new InventoryService(productRepository, orderRepository, outOfStockMailer);
     }
 
     @Test
@@ -49,9 +51,11 @@ class InventoryServiceTest {
 
         inventoryService.decrementForPaidOrder(order);
         assertThat(order.isInventoryDecremented()).isTrue();
+        verify(outOfStockMailer).notifyIfSoldOut(productId);
 
         inventoryService.decrementForPaidOrder(order);
         verify(productRepository, times(1)).decrementStockIfAvailable(productId, 2);
+        verify(outOfStockMailer, times(1)).notifyIfSoldOut(productId);
     }
 
     @Test
@@ -71,6 +75,7 @@ class InventoryServiceTest {
                 .isInstanceOf(InsufficientStockException.class);
         assertThat(order.isInventoryDecremented()).isFalse();
         verify(orderRepository, never()).save(any());
+        verify(outOfStockMailer, never()).notifyIfSoldOut(any());
     }
 
     @Test
@@ -92,6 +97,7 @@ class InventoryServiceTest {
 
         assertThat(order.isInventoryDecremented()).isTrue();
         verify(productRepository).decrementStockIfAvailable(productId, 1);
+        verify(outOfStockMailer).notifyIfSoldOut(productId);
     }
 
     @Test

@@ -37,10 +37,28 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
             UPDATE products
-            SET quantity_available = quantity_available + :qty
+            SET quantity_available = quantity_available + :qty,
+                out_of_stock_notified_at = CASE
+                    WHEN quantity_available + :qty > 0 THEN NULL
+                    ELSE out_of_stock_notified_at
+                END
             WHERE id = :productId
             """, nativeQuery = true)
     int incrementStock(@Param("productId") UUID productId, @Param("qty") int qty);
+
+    /**
+     * Atomically claim the merchant out-of-stock email for this sold-out episode.
+     * Succeeds only when stock is 0 and no notification has been recorded yet.
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = """
+            UPDATE products
+            SET out_of_stock_notified_at = CURRENT_TIMESTAMP
+            WHERE id = :productId
+              AND quantity_available = 0
+              AND out_of_stock_notified_at IS NULL
+            """, nativeQuery = true)
+    int claimOutOfStockNotification(@Param("productId") UUID productId);
 
     /** Lines used for stock movement — bypasses LAZY Product association. */
     @Query(value = """

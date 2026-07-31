@@ -524,6 +524,7 @@ Every product has `quantityAvailable` (integer ≥ 0, required on create). Respo
 - Stock decrements atomically when payment marks the order `paid` (`inventory_decremented` flag; duplicate webhooks do not double-decrement).
 - Merchant cancel from `paid`/`processing` restocks once when stock had been decremented.
 - Merchant list supports optional `?inStock=true|false`.
+- When stock reaches **0** (paid decrement or merchant PATCH), the workspace owner gets one out-of-stock email per sold-out episode (`products.out_of_stock_notified_at`; cleared when quantity goes back above 0). Email failures never fail payment.
 
 ### Payments — Paystack Subaccounts (Step 06B)
 
