@@ -381,7 +381,27 @@ All workspace endpoints require a valid JWT Bearer token. A workspace is auto-cr
 | `GET` | `/{workspaceId}` | Get a single workspace by ID. Returns 404 if not found or not owned by the caller. |
 | `GET` | `/{workspaceId}/storefront/draft` | Get the storefront draft for the workspace. Auto-creates a storefront from the `classic-boutique` v1 template if none exists. |
 | `PUT` | `/{workspaceId}/storefront/draft` | Replace the full draft config. Validates the config against the specified template version before saving. |
-| `POST` | `/{workspaceId}/storefront/draft/reset` | Reset the draft config back to the template's default config. |
+| `POST` | `/{workspaceId}/storefront/draft/reset` | Reset the draft config to that version's DB `default_config` and sets `templateSetupCompletedAt` (products/media unchanged). |
+
+### Storefront Templates (`/api/v1/storefront-templates`)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/` | List `available` and `coming_soon` templates for the picker (auth required). |
+
+**Template catalog item (`data[]`):**
+```json
+{
+  "id": "classic-boutique",
+  "name": "Classic Boutique",
+  "description": "Editorial homepage with hero, products, promos…",
+  "vibe": "Editorial retail",
+  "status": "available",
+  "latestVersion": 1,
+  "previewImageUrl": null,
+  "supportedThemeIds": ["blue", "red"]
+}
+```
 
 **`GET /` — response shape (`data` field):**
 ```json
@@ -420,12 +440,14 @@ All workspace endpoints require a valid JWT Bearer token. A workspace is auto-cr
   "templateVersion": 1,
   "configVersion": 1,
   "config": { ... },
+  "templateSetupCompletedAt": null,
   "updatedAt": "2025-01-01T10:00:00"
 }
 ```
 
 **Storefront validation rules:**
 - The `templateId` must exist and not be `DISABLED`.
+- Apply/reset/update requires template `status = AVAILABLE` (`coming_soon` is catalog-only).
 - The `templateVersion` must exist for that template.
 - The `config` sections must be a subset of the template version's `supportedSections`.
 - classic-boutique `supportedSections`: `hero`, `featuredProducts`, `newArrivals`, `shopByCategory`, `sale`, `promoBanner`, `textImage`, `features`, `testimonials`, `instagramGallery`, `newsletter`, `faq`, `contactCta`.

@@ -2,6 +2,7 @@ package sme.tech.innovators.sme.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "storefronts")
+@DynamicUpdate
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -52,6 +54,13 @@ public class Storefront {
 
     @Column(name = "last_published_at")
     private LocalDateTime lastPublishedAt;
+
+    /**
+     * When the merchant explicitly chose/applied a template via draft reset.
+     * Null means the template picker gate should still show.
+     */
+    @Column(name = "template_setup_completed_at")
+    private LocalDateTime templateSetupCompletedAt;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

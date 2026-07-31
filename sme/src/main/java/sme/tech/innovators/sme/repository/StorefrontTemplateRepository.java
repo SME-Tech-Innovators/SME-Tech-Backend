@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface StorefrontTemplateRepository extends JpaRepository<StorefrontTemplate, String> {
     List<StorefrontTemplate> findAllByStatus(StorefrontTemplateStatus status);
+
+    List<StorefrontTemplate> findAllByStatusIn(List<StorefrontTemplateStatus> statuses);
 }

@@ -68,7 +68,7 @@ public class WorkspaceService {
         Workspace workspace = loadOwnedWorkspace(workspaceId, userId);
         Storefront storefront = ensureStorefrontExists(workspace);
 
-        StorefrontTemplateVersion templateVersion = loadAndValidateTemplateVersion(
+        StorefrontTemplateVersion templateVersion = loadAndValidateTemplateVersionForApply(
                 request.getTemplateId(), request.getTemplateVersion());
 
         configValidator.validate(
@@ -94,13 +94,16 @@ public class WorkspaceService {
         Workspace workspace = loadOwnedWorkspace(workspaceId, userId);
         Storefront storefront = ensureStorefrontExists(workspace);
 
-        StorefrontTemplateVersion templateVersion = loadAndValidateTemplateVersion(
+        StorefrontTemplateVersion templateVersion = loadAndValidateTemplateVersionForApply(
                 request.getTemplateId(), request.getTemplateVersion());
 
         storefront.setTemplateId(request.getTemplateId());
         storefront.setTemplateVersion(request.getTemplateVersion());
-        storefront.setDraftConfig(templateVersion.getDefaultConfig());
+        storefront.setDraftConfig(deepCopyConfig(templateVersion.getDefaultConfig()));
         storefront.setDraftConfigVersion(1);
+        if (storefront.getTemplateSetupCompletedAt() == null) {
+            storefront.setTemplateSetupCompletedAt(LocalDateTime.now());
+        }
         storefrontRepository.save(storefront);
 
         log.info("Storefront draft reset to template={} v{} for workspace={}",
@@ -159,14 +162,14 @@ public class WorkspaceService {
                 .publishedAt(publishedAt)
                 .notes(request.getNotes())
                 .build();
-        snapshot = publishSnapshotRepository.save(snapshot);
+        snapshot = publishSnapshotRepository.saveAndFlush(snapshot);
 
         storefront.setPublishedSnapshotId(snapshot.getId());
         storefront.setLastPublishedAt(publishedAt);
-        storefrontRepository.save(storefront);
+        storefrontRepository.saveAndFlush(storefront);
 
         workspace.setStatus(WorkspaceStatus.LIVE);
-        workspaceRepository.save(workspace);
+        workspaceRepository.saveAndFlush(workspace);
 
         log.info("Published storefront snapshot={} for workspace={}", snapshot.getId(), workspaceId);
 
@@ -308,7 +311,7 @@ public class WorkspaceService {
                             .workspace(workspace)
                             .templateId(CLASSIC_BOUTIQUE_ID)
                             .templateVersion(1)
-                            .draftConfig(defaultVersion.getDefaultConfig())
+                            .draftConfig(deepCopyConfig(defaultVersion.getDefaultConfig()))
                             .draftConfigVersion(1)
                             .build();
                     return storefrontRepository.save(storefront);
@@ -331,6 +334,17 @@ public class WorkspaceService {
                         "Template '" + templateId + "' version " + version + " does not exist"));
     }
 
+    /** Reset/apply only allows AVAILABLE templates (coming_soon stays catalog-only). */
+    private StorefrontTemplateVersion loadAndValidateTemplateVersionForApply(String templateId,
+                                                                              Integer version) {
+        StorefrontTemplateVersion templateVersion = loadAndValidateTemplateVersion(templateId, version);
+        if (templateVersion.getTemplate().getStatus() != StorefrontTemplateStatus.AVAILABLE) {
+            throw new TemplateDisabledException(
+                    "Template '" + templateId + "' is not available to apply yet");
+        }
+        return templateVersion;
+    }
+
     private WorkspaceDto toWorkspaceDto(Workspace workspace) {
         return WorkspaceDto.builder()
                 .id(workspace.getId())
@@ -351,6 +365,7 @@ public class WorkspaceService {
                 .templateVersion(storefront.getTemplateVersion())
                 .configVersion(storefront.getDraftConfigVersion())
                 .config(storefront.getDraftConfig())
+                .templateSetupCompletedAt(storefront.getTemplateSetupCompletedAt())
                 .updatedAt(storefront.getUpdatedAt())
                 .build();
     }
