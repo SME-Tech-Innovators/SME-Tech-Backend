@@ -129,6 +129,19 @@ public class EmailService {
                                     String sku,
                                     String storeName,
                                     UUID workspaceId) {
+        sendOutOfStockEmailSync(toEmail, merchantName, productTitle, sku, storeName, workspaceId);
+    }
+
+    /**
+     * Synchronous send used by {@link OutOfStockMailer} so claim can be released on SES failure.
+     * @return true if SES accepted the message
+     */
+    public boolean sendOutOfStockEmailSync(String toEmail,
+                                           String merchantName,
+                                           String productTitle,
+                                           String sku,
+                                           String storeName,
+                                           UUID workspaceId) {
         String name = merchantName != null && !merchantName.isBlank() ? merchantName : "there";
         String title = productTitle != null && !productTitle.isBlank() ? productTitle : "a product";
         String store = storeName != null && !storeName.isBlank() ? storeName : "your store";
@@ -155,7 +168,7 @@ public class EmailService {
                 + "<p><a href=\"" + inventoryLink + "\">Open Inventory / Products</a></p>"
                 + "<p>Thank you!</p>";
 
-        sendWithRetry(toEmail, subject, textBody, htmlBody, "OUT_OF_STOCK_EMAIL");
+        return sendWithRetry(toEmail, subject, textBody, htmlBody, "OUT_OF_STOCK_EMAIL");
     }
 
     private String normalizeFrontendUrl() {
@@ -186,7 +199,7 @@ public class EmailService {
                 .replace("\"", "&quot;");
     }
 
-    private void sendWithRetry(String toEmail, String subject,
+    private boolean sendWithRetry(String toEmail, String subject,
                                String textBody, String htmlBody, String emailType) {
         int maxRetries = 3;
         long[] backoffMs = {1000, 2000, 4000};
@@ -209,7 +222,7 @@ public class EmailService {
                 sesClient.sendEmail(request);
                 log.info("Email [{}] sent successfully to {} on attempt {}",
                         emailType, toEmail, attempt + 1);
-                return;
+                return true;
             } catch (Exception e) {
                 log.warn("Email [{}] send attempt {}/{} failed for {}: {}",
                         emailType, attempt + 1, maxRetries, toEmail, e.getMessage());
@@ -220,12 +233,13 @@ public class EmailService {
                         Thread.sleep(backoffMs[attempt]);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
-                        return;
+                        return false;
                     }
                 }
             }
         }
         log.error("All {} email send attempts failed for {} [type={}]",
                 maxRetries, toEmail, emailType);
+        return false;
     }
 }

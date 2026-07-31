@@ -60,6 +60,24 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             """, nativeQuery = true)
     int claimOutOfStockNotification(@Param("productId") UUID productId);
 
+    /** Release a claim so a failed send can be retried on the next sold-out trigger. */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = """
+            UPDATE products
+            SET out_of_stock_notified_at = NULL
+            WHERE id = :productId
+            """, nativeQuery = true)
+    int clearOutOfStockNotification(@Param("productId") UUID productId);
+
+    @Query("""
+            SELECT p FROM Product p
+            JOIN FETCH p.workspace w
+            JOIN FETCH w.business b
+            JOIN FETCH b.owner
+            WHERE p.id = :productId
+            """)
+    Optional<Product> findByIdWithWorkspaceOwner(@Param("productId") UUID productId);
+
     /** Lines used for stock movement — bypasses LAZY Product association. */
     @Query(value = """
             SELECT product_id, quantity

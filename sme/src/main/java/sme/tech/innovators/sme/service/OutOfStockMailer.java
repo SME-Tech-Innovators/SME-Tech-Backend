@@ -3,9 +3,11 @@ package sme.tech.innovators.sme.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import sme.tech.innovators.sme.entity.Business;
 import sme.tech.innovators.sme.entity.Product;
 import sme.tech.innovators.sme.entity.User;
@@ -16,8 +18,8 @@ import java.util.UUID;
 
 /**
  * Sends a one-shot merchant email when a product reaches quantity 0.
- * Callers must claim {@code products.out_of_stock_notified_at} first (or invoke
- * {@link #notifyIfSoldOut(UUID)} which claims atomically). Never throws to payment callers.
+ * Claims {@code products.out_of_stock_notified_at} atomically; releases the claim if send fails
+ * so a later restock→0 (or retry) can notify again. Never throws to payment callers.
  */
 @Slf4j
 @Service
@@ -26,6 +28,7 @@ public class OutOfStockMailer {
 
     private final ProductRepository productRepository;
     private final EmailService emailService;
+    private final PlatformTransactionManager transactionManager;
 
     /**
      * After stock may have hit 0: claim the sold-out episode and email the workspace owner.
@@ -38,8 +41,11 @@ public class OutOfStockMailer {
         try {
             int claimed = productRepository.claimOutOfStockNotification(productId);
             if (claimed == 0) {
+                log.debug("Out-of-stock email not claimed for product={} (not at 0 or already notified)",
+                        productId);
                 return;
             }
+            log.info("Claimed out-of-stock email for product={}", productId);
             scheduleSend(productId);
         } catch (Exception e) {
             log.error("Out-of-stock notify claim failed for product={}: {}", productId, e.getMessage());
@@ -60,6 +66,7 @@ public class OutOfStockMailer {
                     } catch (Exception e) {
                         log.error("Out-of-stock email scheduling failed for product={}: {}",
                                 productId, e.getMessage());
+                        releaseClaimQuietly(productId);
                     }
                 }
             });
@@ -68,15 +75,17 @@ public class OutOfStockMailer {
                 sendClaimed(productId);
             } catch (Exception e) {
                 log.error("Out-of-stock email failed for product={}: {}", productId, e.getMessage());
+                releaseClaimQuietly(productId);
             }
         }
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public void sendClaimed(UUID productId) {
-        Product product = productRepository.findById(productId).orElse(null);
+        Product product = productRepository.findByIdWithWorkspaceOwner(productId).orElse(null);
         if (product == null) {
             log.warn("Skipping out-of-stock email — product not found: {}", productId);
+            releaseClaimQuietly(productId);
             return;
         }
 
@@ -86,6 +95,7 @@ public class OutOfStockMailer {
         String toEmail = owner != null ? owner.getEmail() : null;
         if (toEmail == null || toEmail.isBlank()) {
             log.info("Skipping out-of-stock email — no merchant email for product={}", productId);
+            releaseClaimQuietly(productId);
             return;
         }
 
@@ -94,7 +104,7 @@ public class OutOfStockMailer {
                 : (business != null && business.getName() != null ? business.getName() : "your store");
         UUID workspaceId = workspace != null ? workspace.getId() : null;
 
-        emailService.sendOutOfStockEmail(
+        boolean sent = emailService.sendOutOfStockEmailSync(
                 toEmail.trim(),
                 owner.getFullName(),
                 product.getTitle(),
@@ -102,5 +112,19 @@ public class OutOfStockMailer {
                 storeName,
                 workspaceId
         );
+        if (!sent) {
+            log.error("Out-of-stock email failed for product={} to={} — releasing claim for retry",
+                    productId, toEmail);
+            releaseClaimQuietly(productId);
+        }
+    }
+
+    private void releaseClaimQuietly(UUID productId) {
+        try {
+            new TransactionTemplate(transactionManager).executeWithoutResult(status ->
+                    productRepository.clearOutOfStockNotification(productId));
+        } catch (Exception e) {
+            log.warn("Could not release out-of-stock claim for product={}: {}", productId, e.getMessage());
+        }
     }
 }
