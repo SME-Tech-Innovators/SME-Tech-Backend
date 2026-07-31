@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import sme.tech.innovators.sme.entity.Product;
 import sme.tech.innovators.sme.entity.ProductStatus;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,21 +26,31 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     boolean existsByWorkspaceIdAndSlugAndIdNot(UUID workspaceId, String slug, UUID excludeId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("""
-            UPDATE Product p
-            SET p.quantityAvailable = p.quantityAvailable - :qty
-            WHERE p.id = :productId
-              AND p.quantityAvailable >= :qty
-            """)
+    @Query(value = """
+            UPDATE products
+            SET quantity_available = quantity_available - :qty
+            WHERE id = :productId
+              AND quantity_available >= :qty
+            """, nativeQuery = true)
     int decrementStockIfAvailable(@Param("productId") UUID productId, @Param("qty") int qty);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("""
-            UPDATE Product p
-            SET p.quantityAvailable = p.quantityAvailable + :qty
-            WHERE p.id = :productId
-            """)
+    @Query(value = """
+            UPDATE products
+            SET quantity_available = quantity_available + :qty
+            WHERE id = :productId
+            """, nativeQuery = true)
     int incrementStock(@Param("productId") UUID productId, @Param("qty") int qty);
+
+    /** Lines used for stock movement — bypasses LAZY Product association. */
+    @Query(value = """
+            SELECT product_id, quantity
+            FROM order_items
+            WHERE order_id = :orderId
+              AND product_id IS NOT NULL
+              AND quantity > 0
+            """, nativeQuery = true)
+    List<Object[]> findStockLinesForOrder(@Param("orderId") UUID orderId);
 
     @Query("""
             SELECT p FROM Product p

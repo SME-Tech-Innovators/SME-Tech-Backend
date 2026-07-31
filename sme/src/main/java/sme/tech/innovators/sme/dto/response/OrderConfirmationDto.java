@@ -25,6 +25,8 @@ public class OrderConfirmationDto {
     private String currency;
     private String status;
     private String paymentStatus;
+    /** True after stock was decremented for this paid order. */
+    private Boolean inventoryDecremented;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

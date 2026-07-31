@@ -187,6 +187,7 @@ class PaymentServiceTest {
 
         order.setPaymentStatus(PaymentStatus.PAID);
         order.setStatus(OrderStatus.PAID);
+        order.setInventoryDecremented(true);
         Payment payment = Payment.builder()
                 .id(UUID.randomUUID())
                 .order(order)
@@ -202,8 +203,8 @@ class PaymentServiceTest {
         paymentService.handleWebhook(signature, body);
 
         verify(paymentRepository, never()).save(any());
-        verify(orderRepository, never()).save(any());
-        verify(inventoryService).decrementForPaidOrder(order);
+        verify(inventoryService, never()).decrementForPaidOrder(any());
+        verify(inventoryService, never()).decrementForPaidOrder(any(), anyBoolean());
         verify(orderConfirmationMailer).scheduleAfterPayment(order.getId());
     }
 
