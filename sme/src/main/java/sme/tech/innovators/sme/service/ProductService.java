@@ -150,6 +150,24 @@ public class ProductService {
         return toDto(loadOwnedProduct(workspaceId, productId));
     }
 
+    /**
+     * Clears a stale out-of-stock claim and retries the merchant email.
+     * Product must already be at quantity 0.
+     */
+    @Transactional
+    public String resendOutOfStockEmail(UUID workspaceId, UUID productId, UUID userId) {
+        loadOwnedWorkspace(workspaceId, userId);
+        Product product = loadOwnedProduct(workspaceId, productId);
+        int qty = product.getQuantityAvailable() != null ? product.getQuantityAvailable() : 0;
+        if (qty > 0) {
+            throw new InvalidProductDataException(
+                    "Product still has stock (" + qty + "). Set quantity to 0 before notifying.");
+        }
+        outOfStockMailer.forceNotifyIfSoldOut(product.getId());
+        return "Out-of-stock email triggered for product " + product.getId()
+                + ". Check server logs for SES success/failure.";
+    }
+
     @Transactional
     public ProductDto updateProduct(UUID workspaceId,
                                      UUID productId,
@@ -265,8 +283,9 @@ public class ProductService {
             );
         }
 
-        product = productRepository.save(product);
+        product = productRepository.saveAndFlush(product);
         if (soldOutViaPatch) {
+            // Native claim requires qty=0 visible in DB (not only the persistence context).
             outOfStockMailer.notifyIfSoldOut(product.getId());
         }
         return toDto(product);

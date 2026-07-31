@@ -67,6 +67,7 @@ public class InventoryService {
                 throw new InsufficientStockException(
                         "Not enough stock for this product.", null);
             }
+            // Claim SQL must see quantity_available = 0 after the native decrement flush.
             outOfStockMailer.notifyIfSoldOut(productId);
         }
 
