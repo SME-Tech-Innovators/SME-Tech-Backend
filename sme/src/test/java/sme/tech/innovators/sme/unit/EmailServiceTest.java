@@ -190,6 +190,6 @@ class EmailServiceTest {
         String text = captured.message().body().text().data();
         assertTrue(text.contains("SKU: TEE-1"));
         assertTrue(text.contains("quantity available: 0"));
-        assertTrue(text.contains("/workspaces/" + workspaceId + "/products"));
+        assertTrue(text.contains("/dashboard/" + workspaceId + "?section=products"));
     }
 }
