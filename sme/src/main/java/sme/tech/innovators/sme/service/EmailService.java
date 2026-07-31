@@ -10,6 +10,7 @@ import software.amazon.awssdk.services.ses.model.*;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -119,6 +120,41 @@ public class EmailService {
                 + "<p>Thank you!</p>";
 
         sendWithRetry(toEmail, subject, textBody, htmlBody, "ORDER_CONFIRMATION_EMAIL");
+    }
+
+    @Async("emailTaskExecutor")
+    public void sendOutOfStockEmail(String toEmail,
+                                    String merchantName,
+                                    String productTitle,
+                                    String sku,
+                                    String storeName,
+                                    UUID workspaceId) {
+        String name = merchantName != null && !merchantName.isBlank() ? merchantName : "there";
+        String title = productTitle != null && !productTitle.isBlank() ? productTitle : "a product";
+        String store = storeName != null && !storeName.isBlank() ? storeName : "your store";
+        String skuLabel = sku != null && !sku.isBlank() ? sku : "—";
+        String subject = "Out of stock: " + title;
+
+        String inventoryLink = normalizeFrontendUrl() + "/dashboard";
+        if (workspaceId != null) {
+            inventoryLink = normalizeFrontendUrl() + "/workspaces/" + workspaceId + "/products";
+        }
+
+        String textBody = "Hi " + name + ",\n\n"
+                + "\"" + title + "\" (SKU: " + skuLabel + ") in " + store
+                + " is now out of stock (quantity available: 0).\n\n"
+                + "Restock or unpublish it from Inventory/Products:\n"
+                + inventoryLink + "\n\n"
+                + "Thank you!";
+
+        String htmlBody = "<p>Hi " + escapeHtml(name) + ",</p>"
+                + "<p><strong>" + escapeHtml(title) + "</strong> (SKU: "
+                + escapeHtml(skuLabel) + ") in <strong>" + escapeHtml(store)
+                + "</strong> is now out of stock (quantity available: 0).</p>"
+                + "<p><a href=\"" + inventoryLink + "\">Open Inventory / Products</a></p>"
+                + "<p>Thank you!</p>";
+
+        sendWithRetry(toEmail, subject, textBody, htmlBody, "OUT_OF_STOCK_EMAIL");
     }
 
     private String normalizeFrontendUrl() {

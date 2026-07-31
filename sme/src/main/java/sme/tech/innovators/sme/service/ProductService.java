@@ -38,6 +38,7 @@ public class ProductService {
     private final MediaService mediaService;
     private final SlugGeneratorService slugGeneratorService;
     private final ProductNormalizationHelper normalizationHelper;
+    private final OutOfStockMailer outOfStockMailer;
 
     @Transactional(readOnly = true)
     public PageResponse<ProductDto> listProducts(UUID workspaceId,
@@ -179,8 +180,16 @@ public class ProductService {
             product.setPriceAmount(request.getPriceAmount());
         }
 
+        boolean soldOutViaPatch = false;
         if (request.getQuantityAvailable() != null) {
-            product.setQuantityAvailable(requireQuantityAvailable(request.getQuantityAvailable()));
+            int previousQty = product.getQuantityAvailable() != null ? product.getQuantityAvailable() : 0;
+            int newQty = requireQuantityAvailable(request.getQuantityAvailable());
+            product.setQuantityAvailable(newQty);
+            if (newQty > 0) {
+                product.setOutOfStockNotifiedAt(null);
+            } else if (previousQty > 0) {
+                soldOutViaPatch = true;
+            }
         }
 
         if (Boolean.TRUE.equals(request.getClearCompareAtPrice())) {
@@ -257,6 +266,9 @@ public class ProductService {
         }
 
         product = productRepository.save(product);
+        if (soldOutViaPatch) {
+            outOfStockMailer.notifyIfSoldOut(product.getId());
+        }
         return toDto(product);
     }
 
