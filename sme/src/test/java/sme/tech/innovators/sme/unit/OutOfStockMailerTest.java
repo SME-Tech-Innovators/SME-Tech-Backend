@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.PlatformTransactionManager;
 import sme.tech.innovators.sme.entity.*;
 import sme.tech.innovators.sme.repository.ProductRepository;
 import sme.tech.innovators.sme.service.EmailService;
@@ -21,6 +22,7 @@ class OutOfStockMailerTest {
 
     @Mock ProductRepository productRepository;
     @Mock EmailService emailService;
+    @Mock PlatformTransactionManager transactionManager;
     @InjectMocks OutOfStockMailer mailer;
 
     @Test
@@ -66,11 +68,14 @@ class OutOfStockMailerTest {
                 .build();
 
         when(productRepository.claimOutOfStockNotification(productId)).thenReturn(1);
-        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdWithWorkspaceOwner(productId)).thenReturn(Optional.of(product));
+        when(emailService.sendOutOfStockEmailSync(
+                anyString(), anyString(), anyString(), anyString(), anyString(), any()))
+                .thenReturn(true);
 
         mailer.notifyIfSoldOut(productId);
 
-        verify(emailService).sendOutOfStockEmail(
+        verify(emailService).sendOutOfStockEmailSync(
                 eq("merchant@example.com"),
                 eq("Mona"),
                 eq("Classic Tee"),
@@ -108,7 +113,7 @@ class OutOfStockMailerTest {
                 .sku("T1")
                 .workspace(workspace)
                 .build();
-        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdWithWorkspaceOwner(productId)).thenReturn(Optional.of(product));
 
         mailer.sendClaimed(productId);
 
