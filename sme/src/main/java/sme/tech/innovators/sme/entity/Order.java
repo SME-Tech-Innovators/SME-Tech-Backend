@@ -76,6 +76,14 @@ public class Order {
     @Builder.Default
     private boolean confirmationEmailSent = false;
 
+    /**
+     * True after stock was decremented for a paid order.
+     * Used so cancel restocks exactly once and duplicate webhooks do not double-decrement.
+     */
+    @Column(name = "inventory_decremented", nullable = false)
+    @Builder.Default
+    private boolean inventoryDecremented = false;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();

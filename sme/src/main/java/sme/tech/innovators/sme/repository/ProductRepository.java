@@ -3,6 +3,7 @@ package sme.tech.innovators.sme.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import sme.tech.innovators.sme.entity.Product;
@@ -22,6 +23,23 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     boolean existsByWorkspaceIdAndSlug(UUID workspaceId, String slug);
 
     boolean existsByWorkspaceIdAndSlugAndIdNot(UUID workspaceId, String slug, UUID excludeId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            UPDATE Product p
+            SET p.quantityAvailable = p.quantityAvailable - :qty
+            WHERE p.id = :productId
+              AND p.quantityAvailable >= :qty
+            """)
+    int decrementStockIfAvailable(@Param("productId") UUID productId, @Param("qty") int qty);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            UPDATE Product p
+            SET p.quantityAvailable = p.quantityAvailable + :qty
+            WHERE p.id = :productId
+            """)
+    int incrementStock(@Param("productId") UUID productId, @Param("qty") int qty);
 
     @Query("""
             SELECT p FROM Product p
@@ -49,6 +67,11 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
                         )
                    )
               )
+              AND (
+                   :inStock IS NULL
+                   OR (:inStock = TRUE AND p.quantityAvailable > 0)
+                   OR (:inStock = FALSE AND p.quantityAvailable <= 0)
+              )
             """)
     Page<Product> search(
             @Param("workspaceId") UUID workspaceId,
@@ -56,6 +79,7 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             @Param("categoryId") UUID categoryId,
             @Param("search") String search,
             @Param("onSale") Boolean onSale,
+            @Param("inStock") Boolean inStock,
             Pageable pageable);
 
     @Query("""

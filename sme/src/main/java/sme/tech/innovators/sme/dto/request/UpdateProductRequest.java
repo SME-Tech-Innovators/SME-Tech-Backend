@@ -25,6 +25,10 @@ public class UpdateProductRequest {
     /** When true, clears compare-at price (takes precedence over compareAtPriceAmount). */
     private Boolean clearCompareAtPrice;
 
+    /** Units available to sell. Omit on patch to leave unchanged. */
+    @Min(value = 0, message = "quantityAvailable must be >= 0")
+    private Integer quantityAvailable;
+
     private String currency;
     private UUID categoryId;
     private String categoryName;

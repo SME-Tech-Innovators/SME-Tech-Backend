@@ -16,6 +16,7 @@ import sme.tech.innovators.sme.integration.paystack.PaystackClient;
 import sme.tech.innovators.sme.repository.OrderRepository;
 import sme.tech.innovators.sme.repository.PaymentRepository;
 import sme.tech.innovators.sme.service.CheckoutService;
+import sme.tech.innovators.sme.service.InventoryService;
 import sme.tech.innovators.sme.service.OrderConfirmationMailer;
 import sme.tech.innovators.sme.service.PaymentService;
 import sme.tech.innovators.sme.service.PublicStoreResolver;
@@ -42,6 +43,7 @@ class PaymentServiceTest {
     @Mock PaystackClient paystackClient;
     @Mock OrderConfirmationMailer orderConfirmationMailer;
     @Mock CheckoutService checkoutService;
+    @Mock InventoryService inventoryService;
 
     private PaymentService paymentService;
     private Workspace workspace;
@@ -56,7 +58,8 @@ class PaymentServiceTest {
                 paystackClient,
                 new ObjectMapper(),
                 orderConfirmationMailer,
-                checkoutService);
+                checkoutService,
+                inventoryService);
         ReflectionTestUtils.setField(paymentService, "frontendUrl", "https://sme-operations.netlify.app");
         workspace = Workspace.builder()
                 .id(UUID.randomUUID())
@@ -163,6 +166,7 @@ class PaymentServiceTest {
                 .build();
         when(paymentRepository.findByProviderReference("ord_ref_1")).thenReturn(Optional.of(payment));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(orderRepository.findByIdWithItemsAndProducts(order.getId())).thenReturn(Optional.of(order));
         when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
 
         paymentService.handleWebhook(signature, body);
@@ -171,6 +175,7 @@ class PaymentServiceTest {
         assertThat(order.getPaymentStatus()).isEqualTo(PaymentStatus.PAID);
         assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
         verify(orderConfirmationMailer).scheduleAfterPayment(order.getId());
+        verify(inventoryService).decrementForPaidOrder(order);
     }
 
     @Test
@@ -192,11 +197,13 @@ class PaymentServiceTest {
                 .status(PaymentRecordStatus.PAID)
                 .build();
         when(paymentRepository.findByProviderReference("ord_ref_1")).thenReturn(Optional.of(payment));
+        when(orderRepository.findByIdWithItemsAndProducts(order.getId())).thenReturn(Optional.of(order));
 
         paymentService.handleWebhook(signature, body);
 
         verify(paymentRepository, never()).save(any());
         verify(orderRepository, never()).save(any());
+        verify(inventoryService).decrementForPaidOrder(order);
         verify(orderConfirmationMailer).scheduleAfterPayment(order.getId());
     }
 

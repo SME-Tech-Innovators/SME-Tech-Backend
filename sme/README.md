@@ -469,6 +469,22 @@ All workspace endpoints require a valid JWT Bearer token. A workspace is auto-cr
 | `DELETE` | `/storefronts/{storeSlug}/carts/{cartId}/items/{itemId}` | None | Remove cart item. |
 | `POST` | `/storefronts/{storeSlug}/checkout` | None | Convert cart → unpaid `pending_payment` order (no payments yet). |
 | `GET` | `/storefronts/{storeSlug}/orders/{orderId}` | None | Public order confirmation for this store. |
+| `POST` | `/storefronts/{storeSlug}/orders/lookup` | None | Track order by `orderNumber` + `email` (rate-limited; generic 404 on miss). |
+
+**Order status lookup (Step 06C):**
+```bash
+curl -s -X POST "$BASE/orders/lookup" \
+  -H 'Content-Type: application/json' \
+  -d '{"orderNumber":"ORD-20260731-12345","email":"ada@example.com"}'
+```
+Misses return `404` / `ORDER_NOT_FOUND` with message `We couldn't find an order with those details.` (no hint which field failed). Limit: `ORDER_LOOKUP_MAX_ATTEMPTS` (default 30 / hour / IP).
+
+**Merchant fulfilment status (Step 06C, JWT):**
+```http
+PATCH /api/v1/workspaces/{workspaceId}/orders/{orderId}
+{ "status": "processing" }
+```
+Allowed: `processing` | `fulfilled` | `cancelled`. Transitions: `paid→processing|cancelled`, `processing→fulfilled|cancelled`. Invalid → `400` / `VALIDATION_ERROR`.
 
 **Cart / checkout smoke (Step 06A):**
 ```bash
@@ -500,6 +516,15 @@ curl -s "$BASE/orders/$ORDER_ID"
 
 Orders are created with `status=pending_payment`, `paymentStatus=unpaid`, `shippingAmount=0`. Paystack checkout is Step 06B (`…/checkout/{orderId}/pay`).
 
+### Product inventory — hard stock (Step 03C)
+
+Every product has `quantityAvailable` (integer ≥ 0, required on create). Responses include `quantityAvailable` and derived `inStock` (`quantityAvailable > 0`). Existing rows are backfilled to **999** on deploy (not 0).
+
+- Cart add/update and checkout reject oversell with `INSUFFICIENT_STOCK` (optional `error.availableQuantity`).
+- Stock decrements atomically when payment marks the order `paid` (`inventory_decremented` flag; duplicate webhooks do not double-decrement).
+- Merchant cancel from `paid`/`processing` restocks once when stock had been decremented.
+- Merchant list supports optional `?inStock=true|false`.
+
 ### Payments — Paystack Subaccounts (Step 06B)
 
 Platform Paystack account only. Merchants enter **payout bank details**; backend creates/updates a **Paystack Subaccount** with the platform secret key. Never store merchant Paystack secrets.
@@ -524,6 +549,7 @@ Platform Paystack account only. Merchants enter **payout bank details**; backend
 | `GET` | `/api/v1/payments/paystack/banks?country=ZA` | Bank list for Settings dropdown |
 | `GET` | `/api/v1/workspaces/{id}/orders` | Merchant orders (newest first, same shape as public confirmation) |
 | `GET` | `/api/v1/workspaces/{id}/orders/{orderId}` | Merchant order detail |
+| `PATCH` | `/api/v1/workspaces/{id}/orders/{orderId}` | Update fulfilment status (`processing` / `fulfilled` / `cancelled`) |
 
 **Public:**
 
@@ -587,7 +613,8 @@ All error responses use the `ApiResponse` envelope with `success: false`. The `e
 | `PRODUCT_NOT_AVAILABLE` | 422 | Product missing, inactive, or not in this store. |
 | `INVALID_QUANTITY` | 400 | Quantity must be an integer >= 1. |
 | `CHECKOUT_VALIDATION_ERROR` | 422 | Checkout payload failed validation (e.g. invalid cartId). |
-| `ORDER_NOT_FOUND` | 404 | Order missing or not belonging to this store. |
+| `INSUFFICIENT_STOCK` | 422 | Cart/checkout/pay requested qty exceeds `quantityAvailable`. Optional `error.availableQuantity`. |
+| `VALIDATION_ERROR` | 400 | Invalid merchant order status transition or status value. |
 | `PAYMENT_NOT_CONFIGURED` | 422 | Store has no active Paystack subaccount. |
 | `PAYMENT_INITIALIZATION_FAILED` | 502 | Paystack initialize failed or order not payable. |
 | `PAYMENT_WEBHOOK_INVALID` | 401 | Missing/invalid Paystack webhook signature or payload. |

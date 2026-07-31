@@ -60,6 +60,11 @@ public class Product {
     @Column(nullable = false, length = 3)
     private String currency;
 
+    /** Units left to sell. Always tracked; ≥ 0. */
+    @Column(name = "quantity_available", nullable = false)
+    @Builder.Default
+    private Integer quantityAvailable = 999;
+
     @Enumerated(EnumType.STRING)
     @Builder.Default
     @Column(nullable = false, length = 20)
@@ -112,6 +117,9 @@ public class Product {
         }
         if (this.currency == null) {
             this.currency = "ZAR";
+        }
+        if (this.quantityAvailable == null) {
+            this.quantityAvailable = 999;
         }
     }
 

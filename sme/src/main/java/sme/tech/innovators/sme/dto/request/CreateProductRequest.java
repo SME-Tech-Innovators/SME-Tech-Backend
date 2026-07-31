@@ -29,6 +29,11 @@ public class CreateProductRequest {
     @Min(value = 0, message = "compareAtPriceAmount must be >= 0")
     private Integer compareAtPriceAmount;
 
+    /** Units available to sell. Required; integer ≥ 0. */
+    @NotNull(message = "quantityAvailable is required")
+    @Min(value = 0, message = "quantityAvailable must be >= 0")
+    private Integer quantityAvailable;
+
     private String currency;
 
     private UUID categoryId;

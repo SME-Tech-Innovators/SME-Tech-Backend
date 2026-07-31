@@ -46,6 +46,7 @@ public class ProductService {
                                                   UUID categoryId,
                                                   String search,
                                                   Boolean onSale,
+                                                  Boolean inStock,
                                                   String sort,
                                                   int page,
                                                   int limit) {
@@ -61,6 +62,7 @@ public class ProductService {
                 categoryId,
                 search,
                 onSale,
+                inStock,
                 buildMerchantPageable(safePage, safeLimit, sort)
         );
 
@@ -99,13 +101,16 @@ public class ProductService {
         Category category = resolveCategory(workspace, request.getCategoryId(), request.getCategoryName());
 
         if (status == ProductStatus.ACTIVE) {
-            validateActiveRequirements(title, sku, request.getPriceAmount(), currency);
+            validateActiveRequirements(title, sku, request.getPriceAmount(), currency,
+                    request.getQuantityAvailable());
         }
 
         MediaAsset mainImage = null;
         if (request.getMainImageId() != null) {
             mainImage = mediaService.requireReadyMedia(workspaceId, request.getMainImageId());
         }
+
+        int quantityAvailable = requireQuantityAvailable(request.getQuantityAvailable());
 
         Product product = Product.builder()
                 .workspace(workspace)
@@ -117,6 +122,7 @@ public class ProductService {
                 .priceAmount(request.getPriceAmount())
                 .compareAtPriceAmount(request.getCompareAtPriceAmount())
                 .currency(currency)
+                .quantityAvailable(quantityAvailable)
                 .status(status)
                 .mainImage(mainImage)
                 .imageUrl(mainImage != null ? mainImage.getUrl() : blankToNull(request.getImageUrl()))
@@ -171,6 +177,10 @@ public class ProductService {
         if (request.getPriceAmount() != null) {
             normalizationHelper.validatePriceAmount(request.getPriceAmount());
             product.setPriceAmount(request.getPriceAmount());
+        }
+
+        if (request.getQuantityAvailable() != null) {
+            product.setQuantityAvailable(requireQuantityAvailable(request.getQuantityAvailable()));
         }
 
         if (Boolean.TRUE.equals(request.getClearCompareAtPrice())) {
@@ -241,7 +251,8 @@ public class ProductService {
                     product.getTitle(),
                     product.getSku(),
                     product.getPriceAmount(),
-                    product.getCurrency()
+                    product.getCurrency(),
+                    product.getQuantityAvailable()
             );
         }
 
@@ -265,7 +276,8 @@ public class ProductService {
                 product.getTitle(),
                 product.getSku(),
                 product.getPriceAmount(),
-                product.getCurrency()
+                product.getCurrency(),
+                product.getQuantityAvailable()
         );
         product.setStatus(ProductStatus.ACTIVE);
         return toDto(productRepository.save(product));
@@ -335,7 +347,11 @@ public class ProductService {
         throw new ProductSlugExistsException("Unable to generate a unique product slug");
     }
 
-    private void validateActiveRequirements(String title, String sku, Integer priceAmount, String currency) {
+    private void validateActiveRequirements(String title,
+                                             String sku,
+                                             Integer priceAmount,
+                                             String currency,
+                                             Integer quantityAvailable) {
         if (title == null || title.isBlank()) {
             throw new InvalidProductDataException("Active products require a title");
         }
@@ -344,6 +360,17 @@ public class ProductService {
         }
         normalizationHelper.validatePriceAmount(priceAmount);
         normalizationHelper.normalizeCurrency(currency);
+        requireQuantityAvailable(quantityAvailable);
+    }
+
+    private int requireQuantityAvailable(Integer quantityAvailable) {
+        if (quantityAvailable == null) {
+            throw new InvalidProductDataException("quantityAvailable is required");
+        }
+        if (quantityAvailable < 0) {
+            throw new InvalidProductDataException("quantityAvailable must be >= 0");
+        }
+        return quantityAvailable;
     }
 
     private ProductStatus parseStatusOrNull(String status) {
@@ -445,6 +472,8 @@ public class ProductService {
                                 product.getCompareAtPriceAmount(), product.getCurrency())
                         : null)
                 .onSale(onSale)
+                .quantityAvailable(product.getQuantityAvailable() != null ? product.getQuantityAvailable() : 0)
+                .inStock(product.getQuantityAvailable() != null && product.getQuantityAvailable() > 0)
                 .category(product.getCategory() != null ? categoryService.toDto(product.getCategory()) : null)
                 .status(product.getStatus())
                 .mainImageId(product.getMainImage() != null ? product.getMainImage().getId() : null)

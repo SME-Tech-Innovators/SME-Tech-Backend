@@ -27,6 +27,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CheckoutService {
 
+    public static final String GENERIC_LOOKUP_MISS =
+            "We couldn't find an order with those details.";
+
     private final CartRepository cartRepository;
     private final OrderRepository orderRepository;
     private final PublicStoreResolver publicStoreResolver;
@@ -56,6 +59,12 @@ public class CheckoutService {
                 throw new ProductNotAvailableException(
                         "Product is not available for checkout: "
                                 + (product != null ? product.getId() : cartItem.getId()));
+            }
+
+            int available = product.getQuantityAvailable() != null ? product.getQuantityAvailable() : 0;
+            if (cartItem.getQuantity() > available) {
+                throw new InsufficientStockException(
+                        "Not enough stock for this product.", available);
             }
 
             int lineTotal = cartItem.getUnitPriceAmount() * cartItem.getQuantity();
@@ -115,6 +124,28 @@ public class CheckoutService {
 
         Order order = orderRepository.findByIdAndWorkspaceId(oid, workspace.getId())
                 .orElseThrow(() -> new OrderNotFoundException("Order not found: " + orderId));
+
+        return toConfirmationDto(order);
+    }
+
+    /**
+     * Public order track lookup by order number + customer email.
+     * Misses always use a generic message (no enumeration of which field failed).
+     */
+    @Transactional(readOnly = true)
+    public OrderConfirmationDto lookupOrder(String storeSlug, String orderNumber, String email) {
+        Workspace workspace = publicStoreResolver.requireLiveWorkspace(storeSlug);
+
+        String normalizedNumber = orderNumber == null ? "" : orderNumber.trim();
+        String normalizedEmail = email == null ? "" : email.trim();
+        if (normalizedNumber.isEmpty() || normalizedEmail.isEmpty()) {
+            throw new OrderNotFoundException(GENERIC_LOOKUP_MISS);
+        }
+
+        Order order = orderRepository
+                .findByWorkspaceIdAndOrderNumberIgnoreCaseAndCustomerEmailIgnoreCase(
+                        workspace.getId(), normalizedNumber, normalizedEmail)
+                .orElseThrow(() -> new OrderNotFoundException(GENERIC_LOOKUP_MISS));
 
         return toConfirmationDto(order);
     }

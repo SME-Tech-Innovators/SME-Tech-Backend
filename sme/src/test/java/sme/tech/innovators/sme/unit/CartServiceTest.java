@@ -8,6 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import sme.tech.innovators.sme.dto.response.CartDto;
 import sme.tech.innovators.sme.entity.*;
 import sme.tech.innovators.sme.exception.CartNotFoundException;
+import sme.tech.innovators.sme.exception.InsufficientStockException;
 import sme.tech.innovators.sme.exception.InvalidQuantityException;
 import sme.tech.innovators.sme.exception.ProductNotAvailableException;
 import sme.tech.innovators.sme.repository.CartItemRepository;
@@ -124,6 +125,23 @@ class CartServiceTest {
     }
 
     @Test
+    void addItemRejectsWhenQuantityExceedsStock() {
+        Cart cart = activeCart();
+        stubActiveCart(cart);
+        Product product = product(10000);
+        product.setQuantityAvailable(2);
+        when(productRepository.findByWorkspaceIdAndIdAndStatus(
+                workspace.getId(), product.getId(), ProductStatus.ACTIVE))
+                .thenReturn(Optional.of(product));
+        when(cartItemRepository.findByCartIdAndProductId(cart.getId(), product.getId()))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> cartService.addItem(
+                "bridge-labs", cart.getId().toString(), product.getId().toString(), 3))
+                .isInstanceOf(InsufficientStockException.class);
+    }
+
+    @Test
     void wrongStoreOrMissingCartThrowsCartNotFound() {
         UUID cartId = UUID.randomUUID();
         when(cartRepository.findByIdAndWorkspaceIdAndStatus(cartId, workspace.getId(), CartStatus.ACTIVE))
@@ -166,6 +184,7 @@ class CartServiceTest {
         p.setSku("SKU-1");
         p.setPriceAmount(price);
         p.setCurrency("ZAR");
+        p.setQuantityAvailable(999);
         p.setStatus(ProductStatus.ACTIVE);
         return p;
     }
