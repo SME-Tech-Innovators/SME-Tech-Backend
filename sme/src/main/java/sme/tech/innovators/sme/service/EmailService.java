@@ -137,7 +137,8 @@ public class EmailService {
 
         String inventoryLink = normalizeFrontendUrl() + "/dashboard";
         if (workspaceId != null) {
-            inventoryLink = normalizeFrontendUrl() + "/workspaces/" + workspaceId + "/products";
+            inventoryLink = normalizeFrontendUrl()
+                    + "/dashboard/" + workspaceId + "?section=products";
         }
 
         String textBody = "Hi " + name + ",\n\n"
