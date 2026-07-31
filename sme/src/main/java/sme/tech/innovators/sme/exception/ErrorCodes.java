@@ -58,6 +58,9 @@ public final class ErrorCodes {
     public static final String INVALID_QUANTITY = "INVALID_QUANTITY";
     public static final String CHECKOUT_VALIDATION_ERROR = "CHECKOUT_VALIDATION_ERROR";
     public static final String ORDER_NOT_FOUND = "ORDER_NOT_FOUND";
+    /** Invalid merchant order status transition or status value. */
+    public static final String VALIDATION_ERROR = "VALIDATION_ERROR";
+    public static final String INSUFFICIENT_STOCK = "INSUFFICIENT_STOCK";
 
     // Payments (Paystack)
     public static final String PAYMENT_INITIALIZATION_FAILED = "PAYMENT_INITIALIZATION_FAILED";

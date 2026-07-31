@@ -66,9 +66,12 @@ public class CartService {
                         "Product is not available: " + productId));
 
         Optional<CartItem> existing = cartItemRepository.findByCartIdAndProductId(cart.getId(), product.getId());
+        int resultingQty = existing.map(item -> item.getQuantity() + quantity).orElse(quantity);
+        assertStockAvailable(product, resultingQty);
+
         if (existing.isPresent()) {
             CartItem item = existing.get();
-            item.setQuantity(item.getQuantity() + quantity);
+            item.setQuantity(resultingQty);
             cartItemRepository.save(item);
         } else {
             CartItem item = CartItem.builder()
@@ -96,6 +99,12 @@ public class CartService {
                         parseUuid(itemId, "item"), cart.getId())
                 .orElseThrow(() -> new CartItemNotFoundException("Cart item not found: " + itemId));
 
+        Product product = item.getProduct();
+        if (product == null || product.getStatus() != ProductStatus.ACTIVE) {
+            throw new ProductNotAvailableException("Product is not available for this cart item");
+        }
+        assertStockAvailable(product, quantity);
+
         item.setQuantity(quantity);
         cartItemRepository.save(item);
         return toCartDto(reloadCart(cart.getId()));
@@ -112,6 +121,14 @@ public class CartService {
         cartItemRepository.delete(item);
         cart.getItems().removeIf(i -> i.getId().equals(item.getId()));
         return toCartDto(reloadCart(cart.getId()));
+    }
+
+    private void assertStockAvailable(Product product, int requestedQty) {
+        int available = product.getQuantityAvailable() != null ? product.getQuantityAvailable() : 0;
+        if (requestedQty > available) {
+            throw new InsufficientStockException(
+                    "Not enough stock for this product.", available);
+        }
     }
 
     private UUID parseUuid(String raw, String kind) {

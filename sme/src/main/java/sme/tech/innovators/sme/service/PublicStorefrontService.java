@@ -221,6 +221,8 @@ public class PublicStorefrontService {
                                 product.getCompareAtPriceAmount(), product.getCurrency())
                         : null)
                 .onSale(onSale)
+                .quantityAvailable(product.getQuantityAvailable() != null ? product.getQuantityAvailable() : 0)
+                .inStock(product.getQuantityAvailable() != null && product.getQuantityAvailable() > 0)
                 .category(product.getCategory() != null ? categoryService.toDto(product.getCategory()) : null)
                 .status(product.getStatus())
                 .mainImageId(product.getMainImage() != null ? product.getMainImage().getId() : null)

@@ -10,6 +10,7 @@ import sme.tech.innovators.sme.dto.response.OrderConfirmationDto;
 import sme.tech.innovators.sme.entity.*;
 import sme.tech.innovators.sme.exception.CartEmptyException;
 import sme.tech.innovators.sme.exception.CartNotFoundException;
+import sme.tech.innovators.sme.exception.InsufficientStockException;
 import sme.tech.innovators.sme.exception.OrderNotFoundException;
 import sme.tech.innovators.sme.repository.CartRepository;
 import sme.tech.innovators.sme.repository.OrderRepository;
@@ -25,6 +26,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -102,6 +104,19 @@ class CheckoutServiceTest {
     }
 
     @Test
+    void checkoutRejectsInsufficientStock() {
+        Product product = product(15000, "Classic Tee", "SKU-TEE");
+        product.setQuantityAvailable(1);
+        Cart cart = cartWithItems(List.of(cartItem(product, 2, 15000)));
+        when(cartRepository.findByIdAndWorkspaceIdAndStatus(cart.getId(), workspace.getId(), CartStatus.ACTIVE))
+                .thenReturn(Optional.of(cart));
+
+        assertThatThrownBy(() -> checkoutService.checkout("bridge-labs", checkoutRequest(cart.getId())))
+                .isInstanceOf(InsufficientStockException.class);
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
     void checkoutWrongStoreCartThrowsNotFound() {
         UUID cartId = UUID.randomUUID();
         when(cartRepository.findByIdAndWorkspaceIdAndStatus(cartId, workspace.getId(), CartStatus.ACTIVE))
@@ -118,6 +133,48 @@ class CheckoutServiceTest {
 
         assertThatThrownBy(() -> checkoutService.getOrderConfirmation("bridge-labs", orderId.toString()))
                 .isInstanceOf(OrderNotFoundException.class);
+    }
+
+    @Test
+    void lookupOrderMatchesCaseInsensitiveTrimmedFields() {
+        Order order = Order.builder()
+                .id(UUID.randomUUID())
+                .workspace(workspace)
+                .orderNumber("ORD-1001")
+                .customerName("Ada")
+                .customerEmail("ada@example.com")
+                .customerPhone("+2700")
+                .subtotalAmount(1000)
+                .shippingAmount(0)
+                .totalAmount(1000)
+                .currency("ZAR")
+                .status(OrderStatus.PROCESSING)
+                .paymentStatus(PaymentStatus.PAID)
+                .items(List.of())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+        when(orderRepository.findByWorkspaceIdAndOrderNumberIgnoreCaseAndCustomerEmailIgnoreCase(
+                eq(workspace.getId()), eq("ord-1001"), eq("Ada@Example.com")))
+                .thenReturn(Optional.of(order));
+
+        OrderConfirmationDto dto = checkoutService.lookupOrder(
+                "bridge-labs", "  ord-1001  ", "  Ada@Example.com  ");
+
+        assertThat(dto.getOrderNumber()).isEqualTo("ORD-1001");
+        assertThat(dto.getStatus()).isEqualTo("processing");
+        assertThat(dto.getPaymentStatus()).isEqualTo("paid");
+    }
+
+    @Test
+    void lookupOrderMissUsesGenericMessage() {
+        when(orderRepository.findByWorkspaceIdAndOrderNumberIgnoreCaseAndCustomerEmailIgnoreCase(
+                any(), any(), any()))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> checkoutService.lookupOrder("bridge-labs", "ORD-X", "x@y.com"))
+                .isInstanceOf(OrderNotFoundException.class)
+                .hasMessage(CheckoutService.GENERIC_LOOKUP_MISS);
     }
 
     @Test
@@ -193,6 +250,7 @@ class CheckoutServiceTest {
         p.setSku(sku);
         p.setPriceAmount(price);
         p.setCurrency("ZAR");
+        p.setQuantityAvailable(999);
         p.setStatus(ProductStatus.ACTIVE);
         return p;
     }

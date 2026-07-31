@@ -36,6 +36,7 @@ public class PaymentService {
     private final ObjectMapper objectMapper;
     private final OrderConfirmationMailer orderConfirmationMailer;
     private final CheckoutService checkoutService;
+    private final InventoryService inventoryService;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -128,8 +129,11 @@ public class PaymentService {
 
         if (order.getPaymentStatus() == PaymentStatus.PAID
                 && order.getStatus() == OrderStatus.PAID) {
+            // Webhook (often hitting another host) may have marked paid before stock ran.
+            ensureStockDecremented(order.getId());
             orderConfirmationMailer.scheduleAfterPayment(order.getId());
-            return checkoutService.toConfirmationDto(order);
+            return checkoutService.toConfirmationDto(
+                    orderRepository.findById(order.getId()).orElse(order));
         }
 
         Payment payment = paymentRepository.findFirstByOrderIdOrderByCreatedAtDesc(order.getId())
@@ -145,7 +149,8 @@ public class PaymentService {
         }
 
         applyPaid(payment, order, Map.of("event", "transaction.verify", "data", data));
-        return checkoutService.toConfirmationDto(order);
+        return checkoutService.toConfirmationDto(
+                orderRepository.findById(order.getId()).orElse(order));
     }
 
     @Transactional
@@ -181,6 +186,7 @@ public class PaymentService {
 
         if (payment.getStatus() == PaymentRecordStatus.PAID) {
             log.info("Idempotent webhook for already-paid reference={}", reference);
+            ensureStockDecremented(payment.getOrder().getId());
             orderConfirmationMailer.scheduleAfterPayment(payment.getOrder().getId());
             return;
         }
@@ -188,18 +194,37 @@ public class PaymentService {
         applyPaid(payment, payment.getOrder(), payload);
     }
 
+    /**
+     * Heals paid orders that were marked paid (e.g. by another host's webhook) before
+     * inventory decrement ran. Idempotent via {@code inventoryDecremented}.
+     */
+    private void ensureStockDecremented(UUID orderId) {
+        Order order = orderRepository.findByIdWithItemsAndProducts(orderId).orElse(null);
+        if (order == null || order.isInventoryDecremented()) {
+            return;
+        }
+        log.info("Applying deferred stock decrement for paid order={}", orderId);
+        inventoryService.decrementForPaidOrder(order);
+    }
+
     private void applyPaid(Payment payment, Order order, Map<String, Object> rawPayload) {
+        Order orderWithItems = orderRepository.findByIdWithItemsAndProducts(order.getId())
+                .orElse(order);
+
+        // Decrement stock before marking paid so a stock race rolls back the whole TX.
+        inventoryService.decrementForPaidOrder(orderWithItems);
+
         payment.setStatus(PaymentRecordStatus.PAID);
         payment.setRawResponse(rawPayload);
         paymentRepository.save(payment);
 
-        order.setPaymentStatus(PaymentStatus.PAID);
-        order.setStatus(OrderStatus.PAID);
-        orderRepository.save(order);
+        orderWithItems.setPaymentStatus(PaymentStatus.PAID);
+        orderWithItems.setStatus(OrderStatus.PAID);
+        orderRepository.save(orderWithItems);
 
         log.info("Marked order={} paid via Paystack reference={}",
-                order.getId(), payment.getProviderReference());
-        orderConfirmationMailer.scheduleAfterPayment(order.getId());
+                orderWithItems.getId(), payment.getProviderReference());
+        orderConfirmationMailer.scheduleAfterPayment(orderWithItems.getId());
     }
 
     String resolveCallbackUrl(String requested, String storeSlug, String orderId) {

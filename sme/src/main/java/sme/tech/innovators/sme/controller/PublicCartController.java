@@ -1,5 +1,6 @@
 package sme.tech.innovators.sme.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import sme.tech.innovators.sme.dto.request.AddCartItemRequest;
 import sme.tech.innovators.sme.dto.request.CheckoutRequest;
 import sme.tech.innovators.sme.dto.request.InitializePaymentRequest;
+import sme.tech.innovators.sme.dto.request.OrderLookupRequest;
 import sme.tech.innovators.sme.dto.request.UpdateCartItemRequest;
 import sme.tech.innovators.sme.dto.response.ApiResponse;
 import sme.tech.innovators.sme.dto.response.CartDto;
@@ -16,6 +18,7 @@ import sme.tech.innovators.sme.dto.response.PaymentInitDto;
 import sme.tech.innovators.sme.service.CartService;
 import sme.tech.innovators.sme.service.CheckoutService;
 import sme.tech.innovators.sme.service.PaymentService;
+import sme.tech.innovators.sme.service.RateLimitService;
 
 @RestController
 @RequestMapping("/api/v1/public/storefronts/{storeSlug}")
@@ -25,6 +28,7 @@ public class PublicCartController {
     private final CartService cartService;
     private final CheckoutService checkoutService;
     private final PaymentService paymentService;
+    private final RateLimitService rateLimitService;
 
     // ── Cart endpoints ─────────────────────────────────────────────────────
 
@@ -98,11 +102,30 @@ public class PublicCartController {
         return ResponseEntity.ok(ApiResponse.success(confirmation));
     }
 
+    @PostMapping("/orders/lookup")
+    public ResponseEntity<ApiResponse<OrderConfirmationDto>> lookupOrder(
+            @PathVariable String storeSlug,
+            @Valid @RequestBody OrderLookupRequest request,
+            HttpServletRequest httpRequest) {
+        rateLimitService.checkAndIncrementOrderLookup(clientIp(httpRequest));
+        OrderConfirmationDto confirmation = checkoutService.lookupOrder(
+                storeSlug, request.getOrderNumber(), request.getEmail());
+        return ResponseEntity.ok(ApiResponse.success(confirmation));
+    }
+
     @GetMapping("/orders/{orderId}")
     public ResponseEntity<ApiResponse<OrderConfirmationDto>> getOrderConfirmation(
             @PathVariable String storeSlug,
             @PathVariable String orderId) {
         OrderConfirmationDto confirmation = checkoutService.getOrderConfirmation(storeSlug, orderId);
         return ResponseEntity.ok(ApiResponse.success(confirmation));
+    }
+
+    private static String clientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }

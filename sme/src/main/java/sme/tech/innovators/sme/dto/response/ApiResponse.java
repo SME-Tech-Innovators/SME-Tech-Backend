@@ -30,10 +30,25 @@ public class ApiResponse<T> {
                 .build();
     }
 
+    public static <T> ApiResponse<T> error(String code, String message, Integer availableQuantity) {
+        return ApiResponse.<T>builder()
+                .success(false)
+                .data(null)
+                .error(ErrorDetail.builder()
+                        .code(code)
+                        .message(message)
+                        .availableQuantity(availableQuantity)
+                        .build())
+                .timestamp(Instant.now().toString())
+                .build();
+    }
+
     @Data
     @Builder
     public static class ErrorDetail {
         private String code;
         private String message;
+        /** Optional — e.g. remaining stock for INSUFFICIENT_STOCK. */
+        private Integer availableQuantity;
     }
 }

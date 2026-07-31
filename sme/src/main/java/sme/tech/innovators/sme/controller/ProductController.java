@@ -45,13 +45,14 @@ public class ProductController {
             @RequestParam(required = false) UUID categoryId,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean onSale,
+            @RequestParam(required = false) Boolean inStock,
             @RequestParam(required = false) String sort,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int limit,
             Authentication auth) {
         return ResponseEntity.ok(ApiResponse.success(
                 productService.listProducts(
-                        workspaceId, resolveUserId(auth), status, categoryId, search, onSale, sort, page, limit)));
+                        workspaceId, resolveUserId(auth), status, categoryId, search, onSale, inStock, sort, page, limit)));
     }
 
     @Operation(summary = "Create product")

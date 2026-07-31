@@ -23,6 +23,8 @@ public class ProductDto {
     private String priceLabel;
     private String compareAtPriceLabel;
     private Boolean onSale;
+    private Integer quantityAvailable;
+    private Boolean inStock;
     private CategoryDto category;
     private ProductStatus status;
     private UUID mainImageId;

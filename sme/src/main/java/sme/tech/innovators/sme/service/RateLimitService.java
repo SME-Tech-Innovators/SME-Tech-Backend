@@ -26,10 +26,14 @@ public class RateLimitService {
     @Value("${app.rate-limit.block-duration-minutes:60}")
     private int blockDurationMinutes;
 
+    @Value("${app.rate-limit.order-lookup-max-attempts:30}")
+    private int orderLookupMaxAttempts;
+
     private final Cache<String, AtomicInteger> ipAttemptCache;
     private final Cache<String, AtomicInteger> emailAttemptCache;
     private final Cache<String, AtomicInteger> ipConsecutiveViolations;
     private final Cache<String, Boolean> blockedIps;
+    private final Cache<String, AtomicInteger> orderLookupAttemptCache;
 
     public RateLimitService() {
         this.ipAttemptCache = Caffeine.newBuilder()
@@ -47,6 +51,10 @@ public class RateLimitService {
         this.blockedIps = Caffeine.newBuilder()
                 .expireAfterWrite(60, TimeUnit.MINUTES)
                 .maximumSize(10000)
+                .build();
+        this.orderLookupAttemptCache = Caffeine.newBuilder()
+                .expireAfterWrite(60, TimeUnit.MINUTES)
+                .maximumSize(20000)
                 .build();
     }
 
@@ -69,6 +77,21 @@ public class RateLimitService {
             if (emailCount.get() >= emailMaxAttempts) {
                 throw new RateLimitExceededException("Too many registration attempts for this email", "EMAIL");
             }
+        }
+    }
+
+    /**
+     * Rate-limit public order lookup (enumeration / abuse). Counts every call per IP.
+     */
+    public void checkAndIncrementOrderLookup(String ipAddress) {
+        String key = ipAddress == null || ipAddress.isBlank() ? "unknown" : ipAddress.trim();
+        AtomicInteger count = orderLookupAttemptCache.get(key, k -> new AtomicInteger(0));
+        int next = count.incrementAndGet();
+        int limit = Math.max(orderLookupMaxAttempts, 1);
+        if (next > limit) {
+            log.warn("Order lookup rate limit exceeded for ip={} attempts={}", key, next);
+            throw new RateLimitExceededException(
+                    "Too many order lookup attempts. Please try again later.", "ORDER_LOOKUP");
         }
     }
 

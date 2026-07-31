@@ -66,6 +66,7 @@ app:
     email-max-attempts: 3
     window-minutes: 60
     block-duration-minutes: 60
+    order-lookup-max-attempts: ${ORDER_LOOKUP_MAX_ATTEMPTS:30}
 
   slug:
     max-retries: 5

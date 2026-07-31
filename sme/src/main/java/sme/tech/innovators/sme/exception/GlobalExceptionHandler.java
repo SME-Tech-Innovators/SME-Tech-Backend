@@ -307,6 +307,22 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ErrorCodes.ORDER_NOT_FOUND, ex.getMessage()));
     }
 
+    @ExceptionHandler(InvalidOrderStatusTransitionException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidOrderStatus(
+            InvalidOrderStatusTransitionException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ErrorCodes.VALIDATION_ERROR, ex.getMessage()));
+    }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInsufficientStock(InsufficientStockException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ApiResponse.error(
+                        ErrorCodes.INSUFFICIENT_STOCK,
+                        ex.getMessage(),
+                        ex.getAvailableQuantity()));
+    }
+
     @ExceptionHandler(PaymentNotConfiguredException.class)
     public ResponseEntity<ApiResponse<Void>> handlePaymentNotConfigured(PaymentNotConfiguredException ex) {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
