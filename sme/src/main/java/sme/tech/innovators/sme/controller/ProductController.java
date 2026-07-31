@@ -86,6 +86,17 @@ public class ProductController {
                 productService.updateProduct(workspaceId, productId, resolveUserId(auth), request)));
     }
 
+    @Operation(summary = "Resend out-of-stock email (qty must be 0)")
+    @PostMapping("/products/{productId}/out-of-stock-email")
+    public ResponseEntity<ApiResponse<String>> resendOutOfStockEmail(
+            @PathVariable UUID workspaceId,
+            @PathVariable UUID productId,
+            Authentication auth) {
+        String result = productService.resendOutOfStockEmail(
+                workspaceId, productId, resolveUserId(auth));
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
     @Operation(summary = "Archive product")
     @PostMapping("/products/{productId}/archive")
     public ResponseEntity<ApiResponse<ProductDto>> archiveProduct(

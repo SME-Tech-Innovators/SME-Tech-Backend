@@ -41,7 +41,7 @@ public class OutOfStockMailer {
         try {
             int claimed = productRepository.claimOutOfStockNotification(productId);
             if (claimed == 0) {
-                log.debug("Out-of-stock email not claimed for product={} (not at 0 or already notified)",
+                log.info("Out-of-stock email not claimed for product={} (qty not 0 or already notified)",
                         productId);
                 return;
             }
@@ -50,6 +50,18 @@ public class OutOfStockMailer {
         } catch (Exception e) {
             log.error("Out-of-stock notify claim failed for product={}: {}", productId, e.getMessage());
         }
+    }
+
+    /**
+     * Clears any prior claim and attempts send again (product must already be at qty 0).
+     * For merchant retry / support after SES failure.
+     */
+    public void forceNotifyIfSoldOut(UUID productId) {
+        if (productId == null) {
+            return;
+        }
+        releaseClaimQuietly(productId);
+        notifyIfSoldOut(productId);
     }
 
     /** Schedule email after the current transaction commits (or send immediately if none). */
@@ -62,7 +74,9 @@ public class OutOfStockMailer {
                 @Override
                 public void afterCommit() {
                     try {
-                        sendClaimed(productId);
+                        // afterCommit is outside the original TX — open a new one for load + send.
+                        new TransactionTemplate(transactionManager).executeWithoutResult(status ->
+                                sendClaimed(productId));
                     } catch (Exception e) {
                         log.error("Out-of-stock email scheduling failed for product={}: {}",
                                 productId, e.getMessage());
