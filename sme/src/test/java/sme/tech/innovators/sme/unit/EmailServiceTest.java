@@ -144,4 +144,28 @@ class EmailServiceTest {
         verify(auditService, times(3))
                 .logSecurityEvent(anyString(), anyString(), anyString(), anyString());
     }
+
+    @Test
+    void sendOrderConfirmationEmail_includesOrderNumberAndTotal() {
+        ArgumentCaptor<SendEmailRequest> captor = ArgumentCaptor.forClass(SendEmailRequest.class);
+
+        emailService.sendOrderConfirmationEmail(
+                "ada@example.com",
+                "Ada",
+                "Bridge Labs",
+                "bridge-labs",
+                "ORD-20260731-12345",
+                java.util.List.of(new EmailService.OrderLine("Tee", 2, 5000, "ZAR")),
+                5000,
+                "ZAR");
+
+        verify(sesClient).sendEmail(captor.capture());
+        SendEmailRequest captured = captor.getValue();
+        assertTrue(captured.message().subject().data().contains("ORD-20260731-12345"));
+        String text = captured.message().body().text().data();
+        assertTrue(text.contains("ZAR 50.00"));
+        assertTrue(text.contains("Tee × 2"));
+        assertTrue(text.contains("/s/bridge-labs"));
+        assertTrue(text.contains("Payment status: paid"));
+    }
 }

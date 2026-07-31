@@ -9,27 +9,25 @@ import sme.tech.innovators.sme.entity.*;
 import sme.tech.innovators.sme.exception.PublicStorefrontNotPublishedException;
 import sme.tech.innovators.sme.exception.StoreNotAvailableException;
 import sme.tech.innovators.sme.exception.StoreNotFoundException;
-import sme.tech.innovators.sme.repository.*;
+import sme.tech.innovators.sme.repository.ProductImageRepository;
+import sme.tech.innovators.sme.repository.ProductRepository;
 import sme.tech.innovators.sme.service.CategoryService;
 import sme.tech.innovators.sme.service.ProductNormalizationHelper;
 import sme.tech.innovators.sme.service.ProductService;
+import sme.tech.innovators.sme.service.PublicStoreResolver;
 import sme.tech.innovators.sme.service.PublicStorefrontService;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PublicStorefrontServiceTest {
 
-    @Mock WorkspaceRepository workspaceRepository;
-    @Mock StorefrontRepository storefrontRepository;
-    @Mock StorefrontPublishSnapshotRepository publishSnapshotRepository;
+    @Mock PublicStoreResolver publicStoreResolver;
     @Mock ProductRepository productRepository;
     @Mock ProductImageRepository productImageRepository;
     @Mock CategoryService categoryService;
@@ -41,9 +39,7 @@ class PublicStorefrontServiceTest {
     @BeforeEach
     void setUp() {
         service = new PublicStorefrontService(
-                workspaceRepository,
-                storefrontRepository,
-                publishSnapshotRepository,
+                publicStoreResolver,
                 productRepository,
                 productImageRepository,
                 categoryService,
@@ -54,21 +50,22 @@ class PublicStorefrontServiceTest {
 
     @Test
     void missingSlugThrowsStoreNotFound() {
-        when(workspaceRepository.findByPublicSlugIgnoreCase("missing")).thenReturn(Optional.empty());
+        when(publicStoreResolver.resolveLiveStore("missing"))
+                .thenThrow(new StoreNotFoundException("Store not found: missing"));
         assertThrows(StoreNotFoundException.class, () -> service.getPublicStorefront("missing"));
     }
 
     @Test
     void unpublishedThrowsStoreNotAvailable() {
-        Workspace workspace = workspace("shop", WorkspaceStatus.UNPUBLISHED);
-        when(workspaceRepository.findByPublicSlugIgnoreCase("shop")).thenReturn(Optional.of(workspace));
+        when(publicStoreResolver.resolveLiveStore("shop"))
+                .thenThrow(new StoreNotAvailableException("Store is not available: shop"));
         assertThrows(StoreNotAvailableException.class, () -> service.getPublicStorefront("shop"));
     }
 
     @Test
     void draftThrowsNotPublished() {
-        Workspace workspace = workspace("shop", WorkspaceStatus.DRAFT);
-        when(workspaceRepository.findByPublicSlugIgnoreCase("shop")).thenReturn(Optional.of(workspace));
+        when(publicStoreResolver.resolveLiveStore("shop"))
+                .thenThrow(new PublicStorefrontNotPublishedException("Storefront is not published: shop"));
         assertThrows(PublicStorefrontNotPublishedException.class, () -> service.getPublicStorefront("shop"));
     }
 
@@ -101,9 +98,8 @@ class PublicStorefrontServiceTest {
                 .config(publishedConfig)
                 .build();
 
-        when(workspaceRepository.findByPublicSlugIgnoreCase("shop")).thenReturn(Optional.of(workspace));
-        when(storefrontRepository.findByWorkspace(workspace)).thenReturn(Optional.of(storefront));
-        when(publishSnapshotRepository.findById(snapshotId)).thenReturn(Optional.of(snapshot));
+        when(publicStoreResolver.resolveLiveStore("shop"))
+                .thenReturn(new PublicStoreResolver.LiveStore(workspace, storefront, snapshot));
 
         var dto = service.getPublicStorefront("shop");
         assertEquals("Live Shop", dto.getConfig().get("shopName"));

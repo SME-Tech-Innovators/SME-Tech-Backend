@@ -11,10 +11,12 @@ import java.util.List;
 public class CartDto {
     private String id;
     private String workspaceId;
+    private String customerSessionId;
     private String status;
     private String currency;
     private List<CartItemDto> items;
     private Integer subtotalAmount;
+    private Integer totalAmount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

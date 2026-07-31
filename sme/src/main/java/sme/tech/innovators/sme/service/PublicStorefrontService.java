@@ -11,9 +11,6 @@ import sme.tech.innovators.sme.entity.*;
 import sme.tech.innovators.sme.exception.*;
 import sme.tech.innovators.sme.repository.ProductImageRepository;
 import sme.tech.innovators.sme.repository.ProductRepository;
-import sme.tech.innovators.sme.repository.StorefrontPublishSnapshotRepository;
-import sme.tech.innovators.sme.repository.StorefrontRepository;
-import sme.tech.innovators.sme.repository.WorkspaceRepository;
 
 import java.util.List;
 import java.util.Map;
@@ -25,9 +22,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PublicStorefrontService {
 
-    private final WorkspaceRepository workspaceRepository;
-    private final StorefrontRepository storefrontRepository;
-    private final StorefrontPublishSnapshotRepository publishSnapshotRepository;
+    private final PublicStoreResolver publicStoreResolver;
     private final ProductRepository productRepository;
     private final ProductImageRepository productImageRepository;
     private final CategoryService categoryService;
@@ -37,7 +32,7 @@ public class PublicStorefrontService {
     @Transactional(readOnly = true)
     @Cacheable(value = "publicStorefront", key = "#storeSlug.toLowerCase()")
     public PublicStorefrontDto getPublicStorefront(String storeSlug) {
-        LiveStore live = resolveLiveStore(storeSlug);
+        PublicStoreResolver.LiveStore live = publicStoreResolver.resolveLiveStore(storeSlug);
         StorefrontPublishSnapshot snapshot = live.snapshot();
         Workspace workspace = live.workspace();
 
@@ -63,7 +58,7 @@ public class PublicStorefrontService {
                                                        String sort,
                                                        int page,
                                                        int limit) {
-        LiveStore live = resolveLiveStore(storeSlug);
+        PublicStoreResolver.LiveStore live = publicStoreResolver.resolveLiveStore(storeSlug);
         int safePage = Math.max(page, 0);
         int safeLimit = Math.min(Math.max(limit, 1), 100);
 
@@ -90,7 +85,7 @@ public class PublicStorefrontService {
 
     @Transactional(readOnly = true)
     public ProductDto getPublicProduct(String storeSlug, String productSlug) {
-        LiveStore live = resolveLiveStore(storeSlug);
+        PublicStoreResolver.LiveStore live = publicStoreResolver.resolveLiveStore(storeSlug);
         Product product = productRepository
                 .findByWorkspaceIdAndSlugAndStatus(live.workspace().getId(), productSlug, ProductStatus.ACTIVE)
                 .orElseThrow(() -> new PublicProductNotFoundException(
@@ -100,7 +95,7 @@ public class PublicStorefrontService {
 
     @Transactional(readOnly = true)
     public PublicPageDto getPublicPage(String storeSlug, String pageSlug) {
-        LiveStore live = resolveLiveStore(storeSlug);
+        PublicStoreResolver.LiveStore live = publicStoreResolver.resolveLiveStore(storeSlug);
         Map<String, Object> config = live.snapshot().getConfig();
         if (config == null) {
             throw new PublicPageNotFoundException("Page not found: " + pageSlug);
@@ -131,45 +126,6 @@ public class PublicStorefrontService {
         }
 
         throw new PublicPageNotFoundException("Page not found: " + pageSlug);
-    }
-
-    /**
-     * Resolves a publicly available live store by slug.
-     * Never returns draft config — only published snapshot for LIVE workspaces.
-     */
-    private LiveStore resolveLiveStore(String storeSlug) {
-        if (storeSlug == null || storeSlug.isBlank()) {
-            throw new StoreNotFoundException("Store not found");
-        }
-
-        Workspace workspace = workspaceRepository.findByPublicSlugIgnoreCase(storeSlug.trim())
-                .orElseThrow(() -> new StoreNotFoundException("Store not found: " + storeSlug));
-
-        if (workspace.getStatus() == WorkspaceStatus.UNPUBLISHED
-                || workspace.getStatus() == WorkspaceStatus.SUSPENDED) {
-            throw new StoreNotAvailableException("Store is not available: " + storeSlug);
-        }
-
-        if (workspace.getStatus() != WorkspaceStatus.LIVE) {
-            throw new PublicStorefrontNotPublishedException(
-                    "Storefront is not published: " + storeSlug);
-        }
-
-        Storefront storefront = storefrontRepository.findByWorkspace(workspace)
-                .orElseThrow(() -> new PublicStorefrontNotPublishedException(
-                        "Storefront is not published: " + storeSlug));
-
-        if (storefront.getPublishedSnapshotId() == null) {
-            throw new PublicStorefrontNotPublishedException(
-                    "Storefront is not published: " + storeSlug);
-        }
-
-        StorefrontPublishSnapshot snapshot = publishSnapshotRepository
-                .findById(storefront.getPublishedSnapshotId())
-                .orElseThrow(() -> new PublicStorefrontNotPublishedException(
-                        "Published snapshot missing for store: " + storeSlug));
-
-        return new LiveStore(workspace, storefront, snapshot);
     }
 
     private SeoDto buildStoreSeo(Workspace workspace, Map<String, Object> config) {
@@ -285,5 +241,4 @@ public class PublicStorefrontService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
-    private record LiveStore(Workspace workspace, Storefront storefront, StorefrontPublishSnapshot snapshot) {}
 }

@@ -8,9 +8,12 @@ import sme.tech.innovators.sme.dto.response.CartDto;
 import sme.tech.innovators.sme.dto.response.CartItemDto;
 import sme.tech.innovators.sme.entity.*;
 import sme.tech.innovators.sme.exception.*;
-import sme.tech.innovators.sme.repository.*;
+import sme.tech.innovators.sme.repository.CartItemRepository;
+import sme.tech.innovators.sme.repository.CartRepository;
+import sme.tech.innovators.sme.repository.ProductRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -22,18 +25,14 @@ public class CartService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
-    private final WorkspaceRepository workspaceRepository;
+    private final PublicStoreResolver publicStoreResolver;
 
-    /**
-     * Creates an empty active cart for the given store (resolved by public slug).
-     */
     @Transactional
     public CartDto createCart(String storeSlug) {
-        Workspace workspace = resolveWorkspace(storeSlug);
-        String sessionId = UUID.randomUUID().toString();
+        Workspace workspace = publicStoreResolver.requireLiveWorkspace(storeSlug);
         Cart cart = Cart.builder()
                 .workspace(workspace)
-                .customerSessionId(sessionId)
+                .customerSessionId(UUID.randomUUID().toString())
                 .currency("ZAR")
                 .build();
         cart = cartRepository.save(cart);
@@ -41,87 +40,92 @@ public class CartService {
         return toCartDto(cart);
     }
 
-    /**
-     * Returns the cart with backend-calculated totals.
-     */
     @Transactional(readOnly = true)
     public CartDto getCart(String storeSlug, String cartId) {
-        Workspace workspace = resolveWorkspace(storeSlug);
-        Cart cart = resolveActiveCart(UUID.fromString(cartId), workspace.getId());
+        Workspace workspace = publicStoreResolver.requireLiveWorkspace(storeSlug);
+        Cart cart = resolveActiveCart(parseUuid(cartId, "cart"), workspace.getId());
         return toCartDto(cart);
     }
 
     /**
-     * Adds a product to the cart. Snapshots the price from the backend — never trusts frontend price.
+     * Adds a product to the cart. Snapshots unit price from the product entity.
+     * If the same product is already in the cart, increases quantity (keeps original price snapshot).
      */
     @Transactional
     public CartDto addItem(String storeSlug, String cartId, String productId, int quantity) {
         if (quantity < 1) {
             throw new InvalidQuantityException("Quantity must be at least 1");
         }
-        Workspace workspace = resolveWorkspace(storeSlug);
-        Cart cart = resolveActiveCart(UUID.fromString(cartId), workspace.getId());
+        Workspace workspace = publicStoreResolver.requireLiveWorkspace(storeSlug);
+        Cart cart = resolveActiveCart(parseUuid(cartId, "cart"), workspace.getId());
+        UUID productUuid = parseUuid(productId, "product");
 
         Product product = productRepository.findByWorkspaceIdAndIdAndStatus(
-                workspace.getId(), UUID.fromString(productId), ProductStatus.ACTIVE)
+                        workspace.getId(), productUuid, ProductStatus.ACTIVE)
                 .orElseThrow(() -> new ProductNotAvailableException(
                         "Product is not available: " + productId));
 
-        CartItem item = CartItem.builder()
-                .cart(cart)
-                .product(product)
-                .quantity(quantity)
-                .unitPriceAmount(product.getPriceAmount())
-                .currency(product.getCurrency())
-                .build();
-        cartItemRepository.save(item);
+        Optional<CartItem> existing = cartItemRepository.findByCartIdAndProductId(cart.getId(), product.getId());
+        if (existing.isPresent()) {
+            CartItem item = existing.get();
+            item.setQuantity(item.getQuantity() + quantity);
+            cartItemRepository.save(item);
+        } else {
+            CartItem item = CartItem.builder()
+                    .cart(cart)
+                    .product(product)
+                    .quantity(quantity)
+                    .unitPriceAmount(product.getPriceAmount())
+                    .currency(product.getCurrency())
+                    .build();
+            cartItemRepository.save(item);
+            cart.getItems().add(item);
+        }
 
-        cart.getItems().add(item);
-        cartRepository.save(cart);
-
-        return toCartDto(cart);
+        return toCartDto(reloadCart(cart.getId()));
     }
 
-    /**
-     * Updates the quantity of an existing cart item.
-     */
     @Transactional
     public CartDto updateItem(String storeSlug, String cartId, String itemId, int quantity) {
         if (quantity < 1) {
             throw new InvalidQuantityException("Quantity must be at least 1");
         }
-        Workspace workspace = resolveWorkspace(storeSlug);
-        Cart cart = resolveActiveCart(UUID.fromString(cartId), workspace.getId());
+        Workspace workspace = publicStoreResolver.requireLiveWorkspace(storeSlug);
+        Cart cart = resolveActiveCart(parseUuid(cartId, "cart"), workspace.getId());
         CartItem item = cartItemRepository.findByIdAndCartId(
-                UUID.fromString(itemId), cart.getId())
+                        parseUuid(itemId, "item"), cart.getId())
                 .orElseThrow(() -> new CartItemNotFoundException("Cart item not found: " + itemId));
 
         item.setQuantity(quantity);
         cartItemRepository.save(item);
-
         return toCartDto(reloadCart(cart.getId()));
     }
 
-    /**
-     * Removes an item from the cart.
-     */
     @Transactional
     public CartDto removeItem(String storeSlug, String cartId, String itemId) {
-        Workspace workspace = resolveWorkspace(storeSlug);
-        Cart cart = resolveActiveCart(UUID.fromString(cartId), workspace.getId());
+        Workspace workspace = publicStoreResolver.requireLiveWorkspace(storeSlug);
+        Cart cart = resolveActiveCart(parseUuid(cartId, "cart"), workspace.getId());
         CartItem item = cartItemRepository.findByIdAndCartId(
-                UUID.fromString(itemId), cart.getId())
+                        parseUuid(itemId, "item"), cart.getId())
                 .orElseThrow(() -> new CartItemNotFoundException("Cart item not found: " + itemId));
 
         cartItemRepository.delete(item);
+        cart.getItems().removeIf(i -> i.getId().equals(item.getId()));
         return toCartDto(reloadCart(cart.getId()));
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
-
-    private Workspace resolveWorkspace(String storeSlug) {
-        return workspaceRepository.findByPublicSlugIgnoreCase(storeSlug)
-                .orElseThrow(() -> new StoreNotFoundException("Store not found: " + storeSlug));
+    private UUID parseUuid(String raw, String kind) {
+        try {
+            return UUID.fromString(raw);
+        } catch (IllegalArgumentException | NullPointerException e) {
+            if ("cart".equals(kind)) {
+                throw new CartNotFoundException("Cart not found: " + raw);
+            }
+            if ("item".equals(kind)) {
+                throw new CartItemNotFoundException("Cart item not found: " + raw);
+            }
+            throw new ProductNotAvailableException("Product is not available: " + raw);
+        }
     }
 
     private Cart resolveActiveCart(UUID cartId, UUID workspaceId) {
@@ -146,10 +150,12 @@ public class CartService {
         return CartDto.builder()
                 .id(cart.getId().toString())
                 .workspaceId(cart.getWorkspace().getId().toString())
+                .customerSessionId(cart.getCustomerSessionId())
                 .status(cart.getStatus().name().toLowerCase())
                 .currency(cart.getCurrency())
                 .items(itemDtos)
                 .subtotalAmount(subtotal)
+                .totalAmount(subtotal)
                 .createdAt(cart.getCreatedAt())
                 .updatedAt(cart.getUpdatedAt())
                 .build();
@@ -165,6 +171,7 @@ public class CartService {
         int lineTotal = item.getUnitPriceAmount() * item.getQuantity();
         return CartItemDto.builder()
                 .id(item.getId().toString())
+                .cartId(item.getCart().getId().toString())
                 .productId(product.getId().toString())
                 .productTitle(product.getTitle())
                 .productSlug(product.getSlug())

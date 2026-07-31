@@ -71,6 +71,11 @@ public class Order {
     @Column(name = "payment_status", nullable = false, length = 20)
     private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
 
+    /** Claim flag so confirmation email is sent at most once per order. */
+    @Column(name = "confirmation_email_sent", nullable = false)
+    @Builder.Default
+    private boolean confirmationEmailSent = false;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();

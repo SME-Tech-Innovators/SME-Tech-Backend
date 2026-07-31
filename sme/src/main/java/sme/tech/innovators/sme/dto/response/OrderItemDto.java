@@ -7,6 +7,7 @@ import lombok.Data;
 @Builder
 public class OrderItemDto {
     private String id;
+    private String orderId;
     private String productId;
     private String title;
     private String sku;

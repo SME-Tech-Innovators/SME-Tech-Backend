@@ -59,6 +59,13 @@ public final class ErrorCodes {
     public static final String CHECKOUT_VALIDATION_ERROR = "CHECKOUT_VALIDATION_ERROR";
     public static final String ORDER_NOT_FOUND = "ORDER_NOT_FOUND";
 
+    // Payments (Paystack)
+    public static final String PAYMENT_INITIALIZATION_FAILED = "PAYMENT_INITIALIZATION_FAILED";
+    public static final String PAYMENT_WEBHOOK_INVALID = "PAYMENT_WEBHOOK_INVALID";
+    public static final String PAYMENT_NOT_CONFIGURED = "PAYMENT_NOT_CONFIGURED";
+    public static final String PAYSTACK_SUBACCOUNT_FAILED = "PAYSTACK_SUBACCOUNT_FAILED";
+    public static final String INVALID_BANK_ACCOUNT = "INVALID_BANK_ACCOUNT";
+
     // Public storefront
     public static final String STORE_NOT_FOUND = "STORE_NOT_FOUND";
     public static final String STORE_NOT_AVAILABLE = "STORE_NOT_AVAILABLE";
