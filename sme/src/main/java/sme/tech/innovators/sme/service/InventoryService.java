@@ -5,13 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sme.tech.innovators.sme.entity.Order;
-import sme.tech.innovators.sme.entity.OrderItem;
 import sme.tech.innovators.sme.exception.InsufficientStockException;
 import sme.tech.innovators.sme.repository.OrderRepository;
 import sme.tech.innovators.sme.repository.ProductRepository;
 
+import java.util.List;
+import java.util.UUID;
+
 /**
  * Hard-stock decrement / restock for paid orders. Idempotent via {@code order.inventoryDecremented}.
+ * Stock lines are read from {@code order_items} via native SQL so LAZY associations cannot skip work.
  */
 @Slf4j
 @Service
@@ -23,47 +26,57 @@ public class InventoryService {
 
     @Transactional
     public void decrementForPaidOrder(Order order) {
+        decrementForPaidOrder(order, false);
+    }
+
+    /**
+     * @param force when true, clears {@code inventoryDecremented} first so a paid order that was
+     *              incorrectly flagged (stock never moved) can be healed once.
+     */
+    @Transactional
+    public void decrementForPaidOrder(Order order, boolean force) {
         if (order == null) {
             return;
+        }
+        if (force && order.isInventoryDecremented()) {
+            log.warn("Force inventory heal — clearing inventoryDecremented for order={}", order.getId());
+            order.setInventoryDecremented(false);
+            orderRepository.saveAndFlush(order);
         }
         if (order.isInventoryDecremented()) {
             log.info("Skipping stock decrement — already applied for order={}", order.getId());
             return;
         }
-        if (order.getItems() == null || order.getItems().isEmpty()) {
-            log.error("Cannot decrement stock — order {} has no line items", order.getId());
-            throw new InsufficientStockException(
-                    "Order has no line items to decrement stock for.", null);
-        }
 
-        int decrementedLines = 0;
-        for (OrderItem item : order.getItems()) {
-            if (item.getProduct() == null || item.getQuantity() == null || item.getQuantity() <= 0) {
-                log.warn("Skipping order item without product/qty on order={}", order.getId());
-                continue;
-            }
-            int updated = productRepository.decrementStockIfAvailable(
-                    item.getProduct().getId(), item.getQuantity());
-            if (updated == 0) {
-                log.error("Stock decrement failed for order={} product={} qty={}",
-                        order.getId(), item.getProduct().getId(), item.getQuantity());
-                throw new InsufficientStockException(
-                        "Not enough stock for this product.",
-                        item.getProduct().getQuantityAvailable());
-            }
-            decrementedLines++;
-        }
-
-        if (decrementedLines == 0) {
-            log.error("Cannot decrement stock — no order items linked to products for order={}",
-                    order.getId());
+        List<Object[]> lines = productRepository.findStockLinesForOrder(order.getId());
+        if (lines == null || lines.isEmpty()) {
+            log.error("Cannot decrement stock — order {} has no product_id lines", order.getId());
             throw new InsufficientStockException(
                     "Order items are missing product links; stock was not changed.", null);
         }
 
+        for (Object[] row : lines) {
+            UUID productId = toUuid(row[0]);
+            int qty = ((Number) row[1]).intValue();
+            int updated = productRepository.decrementStockIfAvailable(productId, qty);
+            if (updated == 0) {
+                log.error("Stock decrement failed for order={} product={} qty={}",
+                        order.getId(), productId, qty);
+                throw new InsufficientStockException(
+                        "Not enough stock for this product.", null);
+            }
+        }
+
         order.setInventoryDecremented(true);
         orderRepository.save(order);
-        log.info("Decremented stock for paid order={} lines={}", order.getId(), decrementedLines);
+        log.info("Decremented stock for paid order={} lines={}", order.getId(), lines.size());
+    }
+
+    private static UUID toUuid(Object raw) {
+        if (raw instanceof UUID uuid) {
+            return uuid;
+        }
+        return UUID.fromString(String.valueOf(raw));
     }
 
     @Transactional
@@ -71,12 +84,12 @@ public class InventoryService {
         if (order == null || !order.isInventoryDecremented()) {
             return;
         }
-        if (order.getItems() != null) {
-            for (OrderItem item : order.getItems()) {
-                if (item.getProduct() == null || item.getQuantity() == null || item.getQuantity() <= 0) {
-                    continue;
-                }
-                productRepository.incrementStock(item.getProduct().getId(), item.getQuantity());
+        List<Object[]> lines = productRepository.findStockLinesForOrder(order.getId());
+        if (lines != null) {
+            for (Object[] row : lines) {
+                UUID productId = toUuid(row[0]);
+                int qty = ((Number) row[1]).intValue();
+                productRepository.incrementStock(productId, qty);
             }
         }
         order.setInventoryDecremented(false);

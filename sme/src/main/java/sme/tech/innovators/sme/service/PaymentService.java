@@ -124,16 +124,21 @@ public class PaymentService {
      */
     @Transactional
     public OrderConfirmationDto verifyPayment(String storeSlug, String orderId) {
+        return verifyPayment(storeSlug, orderId, false);
+    }
+
+    @Transactional
+    public OrderConfirmationDto verifyPayment(String storeSlug, String orderId, boolean forceInventoryHeal) {
         Workspace workspace = publicStoreResolver.requireLiveWorkspace(storeSlug);
         Order order = loadOrderForStore(workspace, orderId);
 
         if (order.getPaymentStatus() == PaymentStatus.PAID
                 && order.getStatus() == OrderStatus.PAID) {
             // Webhook (often hitting another host) may have marked paid before stock ran.
-            ensureStockDecremented(order.getId());
+            ensureStockDecremented(order.getId(), forceInventoryHeal);
             orderConfirmationMailer.scheduleAfterPayment(order.getId());
             return checkoutService.toConfirmationDto(
-                    orderRepository.findById(order.getId()).orElse(order));
+                    orderRepository.findByIdWithItemsAndProducts(order.getId()).orElse(order));
         }
 
         Payment payment = paymentRepository.findFirstByOrderIdOrderByCreatedAtDesc(order.getId())
@@ -150,7 +155,7 @@ public class PaymentService {
 
         applyPaid(payment, order, Map.of("event", "transaction.verify", "data", data));
         return checkoutService.toConfirmationDto(
-                orderRepository.findById(order.getId()).orElse(order));
+                orderRepository.findByIdWithItemsAndProducts(order.getId()).orElse(order));
     }
 
     @Transactional
@@ -195,16 +200,25 @@ public class PaymentService {
     }
 
     /**
-     * Heals paid orders that were marked paid (e.g. by another host's webhook) before
-     * inventory decrement ran. Idempotent via {@code inventoryDecremented}.
+     * Heals paid orders that were marked paid before stock decrement ran.
+     *
+     * @param force when true, clears a stale {@code inventoryDecremented} flag first
+     *              (use once for orders paid while inventory was broken).
      */
-    private void ensureStockDecremented(UUID orderId) {
+    private void ensureStockDecremented(UUID orderId, boolean force) {
         Order order = orderRepository.findByIdWithItemsAndProducts(orderId).orElse(null);
-        if (order == null || order.isInventoryDecremented()) {
+        if (order == null) {
             return;
         }
-        log.info("Applying deferred stock decrement for paid order={}", orderId);
-        inventoryService.decrementForPaidOrder(order);
+        if (!force && order.isInventoryDecremented()) {
+            return;
+        }
+        log.info("Applying deferred stock decrement for paid order={} force={}", orderId, force);
+        inventoryService.decrementForPaidOrder(order, force);
+    }
+
+    private void ensureStockDecremented(UUID orderId) {
+        ensureStockDecremented(orderId, false);
     }
 
     private void applyPaid(Payment payment, Order order, Map<String, Object> rawPayload) {

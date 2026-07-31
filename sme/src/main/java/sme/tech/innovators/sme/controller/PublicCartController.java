@@ -97,8 +97,10 @@ public class PublicCartController {
     @GetMapping("/orders/{orderId}/payment/verify")
     public ResponseEntity<ApiResponse<OrderConfirmationDto>> verifyPayment(
             @PathVariable String storeSlug,
-            @PathVariable String orderId) {
-        OrderConfirmationDto confirmation = paymentService.verifyPayment(storeSlug, orderId);
+            @PathVariable String orderId,
+            @RequestParam(defaultValue = "false") boolean forceInventoryHeal) {
+        OrderConfirmationDto confirmation =
+                paymentService.verifyPayment(storeSlug, orderId, forceInventoryHeal);
         return ResponseEntity.ok(ApiResponse.success(confirmation));
     }
 

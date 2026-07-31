@@ -202,6 +202,7 @@ public class CheckoutService {
                 .currency(order.getCurrency())
                 .status(order.getStatus().name().toLowerCase())
                 .paymentStatus(order.getPaymentStatus().name().toLowerCase())
+                .inventoryDecremented(order.isInventoryDecremented())
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
                 .build();

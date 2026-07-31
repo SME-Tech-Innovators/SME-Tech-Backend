@@ -35,39 +35,37 @@ class InventoryServiceTest {
 
     @Test
     void decrementOnceAndIdempotent() {
-        Product product = new Product();
-        product.setId(UUID.randomUUID());
-        product.setQuantityAvailable(5);
-        OrderItem item = OrderItem.builder().product(product).quantity(2).build();
+        UUID productId = UUID.randomUUID();
+        UUID orderId = UUID.randomUUID();
         Order order = Order.builder()
-                .id(UUID.randomUUID())
+                .id(orderId)
                 .inventoryDecremented(false)
-                .items(List.of(item))
                 .build();
 
-        when(productRepository.decrementStockIfAvailable(product.getId(), 2)).thenReturn(1);
+        when(productRepository.findStockLinesForOrder(orderId))
+                .thenReturn(List.<Object[]>of(new Object[]{productId, 2}));
+        when(productRepository.decrementStockIfAvailable(productId, 2)).thenReturn(1);
         when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
 
         inventoryService.decrementForPaidOrder(order);
         assertThat(order.isInventoryDecremented()).isTrue();
 
         inventoryService.decrementForPaidOrder(order);
-        verify(productRepository, times(1)).decrementStockIfAvailable(product.getId(), 2);
+        verify(productRepository, times(1)).decrementStockIfAvailable(productId, 2);
     }
 
     @Test
     void decrementFailsWhenStockTooLow() {
-        Product product = new Product();
-        product.setId(UUID.randomUUID());
-        product.setQuantityAvailable(1);
-        OrderItem item = OrderItem.builder().product(product).quantity(2).build();
+        UUID productId = UUID.randomUUID();
+        UUID orderId = UUID.randomUUID();
         Order order = Order.builder()
-                .id(UUID.randomUUID())
+                .id(orderId)
                 .inventoryDecremented(false)
-                .items(List.of(item))
                 .build();
 
-        when(productRepository.decrementStockIfAvailable(product.getId(), 2)).thenReturn(0);
+        when(productRepository.findStockLinesForOrder(orderId))
+                .thenReturn(List.<Object[]>of(new Object[]{productId, 2}));
+        when(productRepository.decrementStockIfAvailable(productId, 2)).thenReturn(0);
 
         assertThatThrownBy(() -> inventoryService.decrementForPaidOrder(order))
                 .isInstanceOf(InsufficientStockException.class);
@@ -76,20 +74,41 @@ class InventoryServiceTest {
     }
 
     @Test
-    void restockOnlyWhenDecremented() {
-        Product product = new Product();
-        product.setId(UUID.randomUUID());
-        OrderItem item = OrderItem.builder().product(product).quantity(3).build();
+    void forceClearsStaleFlagThenDecrements() {
+        UUID productId = UUID.randomUUID();
+        UUID orderId = UUID.randomUUID();
         Order order = Order.builder()
-                .id(UUID.randomUUID())
+                .id(orderId)
                 .inventoryDecremented(true)
-                .items(List.of(item))
                 .build();
+
+        when(orderRepository.saveAndFlush(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(productRepository.findStockLinesForOrder(orderId))
+                .thenReturn(List.<Object[]>of(new Object[]{productId, 1}));
+        when(productRepository.decrementStockIfAvailable(productId, 1)).thenReturn(1);
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        inventoryService.decrementForPaidOrder(order, true);
+
+        assertThat(order.isInventoryDecremented()).isTrue();
+        verify(productRepository).decrementStockIfAvailable(productId, 1);
+    }
+
+    @Test
+    void restockOnlyWhenDecremented() {
+        UUID productId = UUID.randomUUID();
+        UUID orderId = UUID.randomUUID();
+        Order order = Order.builder()
+                .id(orderId)
+                .inventoryDecremented(true)
+                .build();
+        when(productRepository.findStockLinesForOrder(orderId))
+                .thenReturn(List.<Object[]>of(new Object[]{productId, 3}));
         when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
 
         inventoryService.restockForCancelledOrder(order);
 
-        verify(productRepository).incrementStock(eq(product.getId()), eq(3));
+        verify(productRepository).incrementStock(eq(productId), eq(3));
         assertThat(order.isInventoryDecremented()).isFalse();
 
         inventoryService.restockForCancelledOrder(order);
