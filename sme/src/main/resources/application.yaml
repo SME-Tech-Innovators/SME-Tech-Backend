@@ -36,7 +36,8 @@ spring:
 app:
   base-url: ${APP_BASE_URL}
   domain: ${APP_DOMAIN}
-  frontend-url: ${FRONTEND_URL}
+  # FRONTEND_BASE_URL preferred for Paystack callback defaults; falls back to FRONTEND_URL
+  frontend-url: ${FRONTEND_BASE_URL:${FRONTEND_URL}}
   email:
     from: ${APP_EMAIL_FROM}
   aws:
@@ -74,6 +75,13 @@ app:
 
   bcrypt:
     strength: 12
+
+  paystack:
+    secret-key: ${PAYSTACK_SECRET_KEY:}
+    public-key: ${PAYSTACK_PUBLIC_KEY:}
+    webhook-secret: ${PAYSTACK_WEBHOOK_SECRET:}
+    base-url: ${PAYSTACK_BASE_URL:https://api.paystack.co}
+    platform-fee-percent: ${PAYSTACK_PLATFORM_FEE_PERCENT:0}
 
 springdoc:
   api-docs:
@@ -131,3 +139,9 @@ app:
     allowed-origins: http://localhost:3000
   slug:
     reserved-keywords: admin,api,app,auth,store
+  paystack:
+    secret-key: sk_test_dummy
+    public-key: pk_test_dummy
+    webhook-secret: whsec_test_dummy
+    base-url: https://api.paystack.co
+    platform-fee-percent: 0

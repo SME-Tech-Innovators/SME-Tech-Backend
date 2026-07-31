@@ -26,7 +26,8 @@ All secrets are injected via environment variables. **Never hardcode credentials
 | `AWS_SECRET_ACCESS_KEY` | AWS IAM secret key for SES authentication        | — **required**                                                |
 | `AWS_REGION`            | AWS region where SES is enabled (e.g. `us-east-1`) | — **required**                                              |
 | `APP_EMAIL_FROM`        | Verified SES sender address (e.g. `noreply@yourdomain.com`) | — **required**                              |
-| `FRONTEND_URL`          | Frontend base URL used for post-verification redirect and public storefront links | `https://sme-operations.netlify.app` |
+| `FRONTEND_URL`          | Frontend base URL (verify links, storefront links, Paystack callback default) | `https://sme-operations.netlify.app` |
+| `FRONTEND_BASE_URL`     | Optional alias for frontend base; if set, overrides `FRONTEND_URL` for `app.frontend-url` | same as `FRONTEND_URL` |
 | `JWT_SECRET`            | Hex-encoded 256-bit secret for JWT signing       | `404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970` — **hardcoded fallback, must be overridden in production** |
 | `APP_BASE_URL`          | Backend base URL used in email verification links | `https://sme-operations-dza7e5czhdggexfh.canadacentral-01.azurewebsites.net` |
 | `APP_DOMAIN`            | Domain used for public storefront links          | `localhost:8080`                                              |
@@ -460,6 +461,100 @@ All workspace endpoints require a valid JWT Bearer token. A workspace is auto-cr
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | `GET` | `/store/{slug}` | None | Retrieve public business info by slug. Returns name, slug, description, and public link only — no sensitive data. |
+| `GET` | `/storefronts/{storeSlug}` | None | Published storefront config for a LIVE store. |
+| `POST` | `/storefronts/{storeSlug}/carts` | None | Create an anonymous active cart. |
+| `GET` | `/storefronts/{storeSlug}/carts/{cartId}` | None | Get cart with backend-calculated totals. |
+| `POST` | `/storefronts/{storeSlug}/carts/{cartId}/items` | None | Add item (price snapshotted; same product merges quantity). |
+| `PATCH` | `/storefronts/{storeSlug}/carts/{cartId}/items/{itemId}` | None | Update item quantity (does not change price snapshot). |
+| `DELETE` | `/storefronts/{storeSlug}/carts/{cartId}/items/{itemId}` | None | Remove cart item. |
+| `POST` | `/storefronts/{storeSlug}/checkout` | None | Convert cart → unpaid `pending_payment` order (no payments yet). |
+| `GET` | `/storefronts/{storeSlug}/orders/{orderId}` | None | Public order confirmation for this store. |
+
+**Cart / checkout smoke (Step 06A):**
+```bash
+BASE=http://localhost:8080/api/v1/public/storefronts/bridge-labs
+
+# 1) Create cart
+CART=$(curl -s -X POST "$BASE/carts")
+CART_ID=$(echo "$CART" | python3 -c 'import sys,json; print(json.load(sys.stdin)["data"]["id"])')
+
+# 2) Add item (use a real ACTIVE product id from the merchant catalog)
+curl -s -X POST "$BASE/carts/$CART_ID/items" \
+  -H 'Content-Type: application/json' \
+  -d '{"productId":"<PRODUCT_UUID>","quantity":1}'
+
+# 3) Checkout
+ORDER=$(curl -s -X POST "$BASE/checkout" -H 'Content-Type: application/json' -d "{
+  \"cartId\": \"$CART_ID\",
+  \"customer\": {\"name\": \"Ada Lovelace\", \"email\": \"ada@example.com\", \"phone\": \"+27000000000\"},
+  \"shippingAddress\": {
+    \"line1\": \"123 Main Road\", \"line2\": \"\", \"city\": \"Cape Town\",
+    \"province\": \"Western Cape\", \"postalCode\": \"8001\", \"country\": \"ZA\"
+  }
+}")
+ORDER_ID=$(echo "$ORDER" | python3 -c 'import sys,json; print(json.load(sys.stdin)["data"]["id"])')
+
+# 4) Confirm order
+curl -s "$BASE/orders/$ORDER_ID"
+```
+
+Orders are created with `status=pending_payment`, `paymentStatus=unpaid`, `shippingAmount=0`. Paystack checkout is Step 06B (`…/checkout/{orderId}/pay`).
+
+### Payments — Paystack Subaccounts (Step 06B)
+
+Platform Paystack account only. Merchants enter **payout bank details**; backend creates/updates a **Paystack Subaccount** with the platform secret key. Never store merchant Paystack secrets.
+
+**Env (never commit):**
+| Variable | Purpose |
+|----------|---------|
+| `PAYSTACK_SECRET_KEY` | Platform secret (`sk_test_…` / `sk_live_…`) |
+| `PAYSTACK_PUBLIC_KEY` | Platform public key (`pk_test_…` / `pk_live_…`) |
+| `PAYSTACK_WEBHOOK_SECRET` | Dashboard webhook signing secret (HMAC-SHA512) |
+| `PAYSTACK_PLATFORM_FEE_PERCENT` | Optional platform fee on subaccounts (default `0`) |
+| `FRONTEND_URL` / `FRONTEND_BASE_URL` | Default Paystack `callback_url` base → `{base}/s/{storeSlug}/order/{orderId}` |
+| `APP_EMAIL_FROM` + AWS SES keys | Order confirmation email after `charge.success` |
+
+**Merchant (JWT):**
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/workspaces/{id}/payments/settings` | Payout fields + subaccount status + `publicKey` |
+| `PUT` | `/api/v1/workspaces/{id}/payments/settings` | Save bank draft |
+| `POST` | `/api/v1/workspaces/{id}/payments/connect` | Create/update Paystack subaccount |
+| `GET` | `/api/v1/payments/paystack/banks?country=ZA` | Bank list for Settings dropdown |
+| `GET` | `/api/v1/workspaces/{id}/orders` | Merchant orders (newest first, same shape as public confirmation) |
+| `GET` | `/api/v1/workspaces/{id}/orders/{orderId}` | Merchant order detail |
+
+**Public:**
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/public/storefronts/{slug}/checkout/{orderId}/pay` | Initialize Paystack transaction (`callbackUrl` optional in body) |
+| `GET` | `/api/v1/public/storefronts/{slug}/orders/{orderId}/payment/verify` | Optional verify via Paystack when webhook is delayed |
+| `POST` | `/api/v1/payments/paystack/webhook` | Paystack `charge.success` → mark payment + order `paid` (HMAC, idempotent) + confirmation email |
+
+**Webhook URL (production Azure — set exactly in Paystack Dashboard):**
+```
+https://sme-operations-gpgudcaud8bddgdu.canadacentral-01.azurewebsites.net/api/v1/payments/paystack/webhook
+```
+
+**Callback (browser return — not the webhook):**
+```
+https://sme-operations.netlify.app/s/{storeSlug}/order/{orderId}
+```
+Paystack may append `?reference=…&trxref=…`. Frontend polls until `paymentStatus=paid`. **Do not** mark paid from the callback alone — webhook or `…/payment/verify` is the source of truth.
+
+On `charge.success` / successful verify: `order.status=paid`, `order.paymentStatus=paid`, then SES confirmation email to `customerEmail` (skipped if blank; sent at most once via `confirmation_email_sent`). Email failures are logged/retried and never fail the webhook HTTP 200.
+
+**Smoke:**
+```bash
+# auth token omitted — use merchant JWT for settings/connect/banks/orders
+# 1) PUT settings → 2) POST connect → 3) 06A checkout → 4) POST …/checkout/{orderId}/pay
+#    body: { "callbackUrl": "https://sme-operations.netlify.app/s/{slug}/order/{orderId}" }
+# 5) Paystack charge.success webhook → order paid + confirmation email
+```
+
+On successful pay init: `order.paymentStatus=initialized`, `order.status` stays `pending_payment` until webhook/verify sets both to `paid`.
 
 ---
 
@@ -486,6 +581,18 @@ All error responses use the `ApiResponse` envelope with `success: false`. The `e
 | `TEMPLATE_NOT_FOUND` | 404 | The specified storefront template does not exist. |
 | `TEMPLATE_DISABLED` | 422 | The specified storefront template exists but is currently disabled. |
 | `INVALID_STOREFRONT_CONFIG` | 400 | The storefront configuration is missing required fields or contains invalid values. |
+| `CART_NOT_FOUND` | 404 | Cart missing, wrong store, inactive, or already converted. |
+| `CART_ITEM_NOT_FOUND` | 404 | Cart line item not found on this cart. |
+| `CART_EMPTY` | 400 | Checkout attempted with an empty cart. |
+| `PRODUCT_NOT_AVAILABLE` | 422 | Product missing, inactive, or not in this store. |
+| `INVALID_QUANTITY` | 400 | Quantity must be an integer >= 1. |
+| `CHECKOUT_VALIDATION_ERROR` | 422 | Checkout payload failed validation (e.g. invalid cartId). |
+| `ORDER_NOT_FOUND` | 404 | Order missing or not belonging to this store. |
+| `PAYMENT_NOT_CONFIGURED` | 422 | Store has no active Paystack subaccount. |
+| `PAYMENT_INITIALIZATION_FAILED` | 502 | Paystack initialize failed or order not payable. |
+| `PAYMENT_WEBHOOK_INVALID` | 401 | Missing/invalid Paystack webhook signature or payload. |
+| `PAYSTACK_SUBACCOUNT_FAILED` | 502 | Subaccount create/update failed. |
+| `INVALID_BANK_ACCOUNT` | 422 | Missing/invalid payout bank fields or bank list failed. |
 
 **Error response shape:**
 ```json

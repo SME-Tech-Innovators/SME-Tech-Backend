@@ -307,6 +307,36 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ErrorCodes.ORDER_NOT_FOUND, ex.getMessage()));
     }
 
+    @ExceptionHandler(PaymentNotConfiguredException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePaymentNotConfigured(PaymentNotConfiguredException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ApiResponse.error(ErrorCodes.PAYMENT_NOT_CONFIGURED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(PaymentInitializationFailedException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePaymentInitFailed(PaymentInitializationFailedException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(ApiResponse.error(ErrorCodes.PAYMENT_INITIALIZATION_FAILED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(PaymentWebhookInvalidException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePaymentWebhookInvalid(PaymentWebhookInvalidException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error(ErrorCodes.PAYMENT_WEBHOOK_INVALID, ex.getMessage()));
+    }
+
+    @ExceptionHandler(PaystackSubaccountFailedException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePaystackSubaccountFailed(PaystackSubaccountFailedException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(ApiResponse.error(ErrorCodes.PAYSTACK_SUBACCOUNT_FAILED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidBankAccountException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidBankAccount(InvalidBankAccountException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ApiResponse.error(ErrorCodes.INVALID_BANK_ACCOUNT, ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
         log.error("Unexpected error", ex);

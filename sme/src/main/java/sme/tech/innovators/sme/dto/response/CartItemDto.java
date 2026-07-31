@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @Builder
 public class CartItemDto {
     private String id;
+    private String cartId;
     private String productId;
     private String productTitle;
     private String productSlug;

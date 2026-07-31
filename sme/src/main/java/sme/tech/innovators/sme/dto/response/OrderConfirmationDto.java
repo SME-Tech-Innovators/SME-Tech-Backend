@@ -11,6 +11,8 @@ import java.util.Map;
 @Builder
 public class OrderConfirmationDto {
     private String id;
+    private String workspaceId;
+    private String cartId;
     private String orderNumber;
     private String customerName;
     private String customerEmail;
@@ -24,4 +26,5 @@ public class OrderConfirmationDto {
     private String status;
     private String paymentStatus;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

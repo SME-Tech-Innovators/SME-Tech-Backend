@@ -7,12 +7,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sme.tech.innovators.sme.dto.request.AddCartItemRequest;
 import sme.tech.innovators.sme.dto.request.CheckoutRequest;
+import sme.tech.innovators.sme.dto.request.InitializePaymentRequest;
 import sme.tech.innovators.sme.dto.request.UpdateCartItemRequest;
 import sme.tech.innovators.sme.dto.response.ApiResponse;
 import sme.tech.innovators.sme.dto.response.CartDto;
 import sme.tech.innovators.sme.dto.response.OrderConfirmationDto;
+import sme.tech.innovators.sme.dto.response.PaymentInitDto;
 import sme.tech.innovators.sme.service.CartService;
 import sme.tech.innovators.sme.service.CheckoutService;
+import sme.tech.innovators.sme.service.PaymentService;
 
 @RestController
 @RequestMapping("/api/v1/public/storefronts/{storeSlug}")
@@ -21,6 +24,7 @@ public class PublicCartController {
 
     private final CartService cartService;
     private final CheckoutService checkoutService;
+    private final PaymentService paymentService;
 
     // ── Cart endpoints ─────────────────────────────────────────────────────
 
@@ -74,6 +78,24 @@ public class PublicCartController {
             @Valid @RequestBody CheckoutRequest request) {
         OrderConfirmationDto confirmation = checkoutService.checkout(storeSlug, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(confirmation));
+    }
+
+    @PostMapping("/checkout/{orderId}/pay")
+    public ResponseEntity<ApiResponse<PaymentInitDto>> pay(
+            @PathVariable String storeSlug,
+            @PathVariable String orderId,
+            @RequestBody(required = false) InitializePaymentRequest request) {
+        PaymentInitDto init = paymentService.initializePayment(
+                storeSlug, orderId, request != null ? request : new InitializePaymentRequest());
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(init));
+    }
+
+    @GetMapping("/orders/{orderId}/payment/verify")
+    public ResponseEntity<ApiResponse<OrderConfirmationDto>> verifyPayment(
+            @PathVariable String storeSlug,
+            @PathVariable String orderId) {
+        OrderConfirmationDto confirmation = paymentService.verifyPayment(storeSlug, orderId);
+        return ResponseEntity.ok(ApiResponse.success(confirmation));
     }
 
     @GetMapping("/orders/{orderId}")
