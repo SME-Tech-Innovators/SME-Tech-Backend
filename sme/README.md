@@ -400,10 +400,15 @@ All workspace endpoints require a valid JWT Bearer token. A workspace is auto-cr
   "status": "available",
   "latestVersion": 1,
   "previewImageUrl": null,
-  "supportedThemeIds": ["blue", "red"]
+  "supportedThemeIds": ["blue", "red", "ink", "forest", "teal", "stone"]
 }
 ```
 
+Built-in templates (seeded on startup):
+- `classic-boutique` v1 — editorial retail (fashion / lifestyle bias)
+- `minimal-catalogue` v1 — product-first multi-category catalogue (`AVAILABLE`; Apply via `draft/reset`)
+
+`POST …/storefront/draft/reset` with `{ "templateId": "minimal-catalogue", "templateVersion": 1 }` loads the neutral default seed (products/media unchanged). Published snapshots keep the previous `templateId` until re-publish.
 **`GET /` — response shape (`data` field):**
 ```json
 [
@@ -451,8 +456,9 @@ All workspace endpoints require a valid JWT Bearer token. A workspace is auto-cr
 - Apply/reset/update requires template `status = AVAILABLE` (`coming_soon` is catalog-only).
 - The `templateVersion` must exist for that template.
 - The `config` sections must be a subset of the template version's `supportedSections`.
-- classic-boutique `supportedSections`: `hero`, `featuredProducts`, `newArrivals`, `shopByCategory`, `sale`, `promoBanner`, `textImage`, `features`, `testimonials`, `instagramGallery`, `newsletter`, `faq`, `contactCta`.
-- The `config` theme must be one of the template version's `supportedThemes`.
+- Built-in templates share `supportedSections`: `hero`, `featuredProducts`, `newArrivals`, `shopByCategory`, `sale`, `promoBanner`, `textImage`, `features`, `testimonials`, `instagramGallery`, `newsletter`, `faq`, `contactCta`.
+- Themes: `blue`, `red`, `ink`, `forest`, `teal`, `stone` for both
+  `classic-boutique` and `minimal-catalogue`.
 
 ---
 
@@ -551,6 +557,11 @@ Platform Paystack account only. Merchants enter **payout bank details**; backend
 | `GET` | `/api/v1/workspaces/{id}/orders` | Merchant orders (newest first, same shape as public confirmation) |
 | `GET` | `/api/v1/workspaces/{id}/orders/{orderId}` | Merchant order detail |
 | `PATCH` | `/api/v1/workspaces/{id}/orders/{orderId}` | Update fulfilment status (`processing` / `fulfilled` / `cancelled`) |
+| `GET` | `/api/v1/workspaces/{id}/analytics/summary?from=&to=` | Dashboard KPIs (paid revenue major units, order counts, AOV; catalog stock counts are current) |
+| `GET` | `/api/v1/workspaces/{id}/analytics/timeseries?from=&to=&grain=day` | Daily paid revenue + paid order counts (fills missing days with 0) |
+| `GET` | `/api/v1/workspaces/{id}/analytics/breakdowns?from=&to=` | Orders by status/payment, top products, revenue by category |
+
+Money in analytics responses is **major units** (`BigDecimal`, e.g. `12500.00` ZAR), unlike catalog/order DTOs which keep minor-unit integers. Default range when `from`/`to` omitted: last 30 days. `lowStockCount` = quantity `1..5`.
 
 **Public:**
 

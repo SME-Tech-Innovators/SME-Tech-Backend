@@ -47,8 +47,8 @@ class StorefrontTemplateServiceTest {
                 .id("minimal-catalogue")
                 .name("Minimal Catalogue")
                 .description("Product-first")
-                .vibe("Clean product focus")
-                .status(StorefrontTemplateStatus.COMING_SOON)
+                .vibe("Clean catalogue")
+                .status(StorefrontTemplateStatus.AVAILABLE)
                 .latestVersion(1)
                 .build();
 
@@ -60,7 +60,7 @@ class StorefrontTemplateServiceTest {
                         .build()));
         when(templateVersionRepository.findByTemplateIdAndVersion("minimal-catalogue", 1))
                 .thenReturn(Optional.of(StorefrontTemplateVersion.builder()
-                        .supportedThemes(List.of("blue"))
+                        .supportedThemes(List.of("blue", "red"))
                         .build()));
 
         List<StorefrontTemplateDto> result = storefrontTemplateService.listTemplates();
@@ -71,6 +71,8 @@ class StorefrontTemplateServiceTest {
         assertEquals("available", first.getStatus());
         assertEquals("Editorial retail", first.getVibe());
         assertEquals(List.of("blue", "red"), first.getSupportedThemeIds());
-        assertEquals("coming_soon", result.get(1).getStatus());
+        assertEquals("available", result.get(1).getStatus());
+        assertEquals("minimal-catalogue", result.get(1).getId());
+        assertEquals(List.of("blue", "red"), result.get(1).getSupportedThemeIds());
     }
 }

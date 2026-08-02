@@ -29,7 +29,8 @@ class StorefrontPublishValidationTest {
             "faq",
             "contactCta"
     );
-    private final List<String> themes = List.of("blue", "red");
+    private final List<String> themes = List.of(
+            "blue", "red", "ink", "forest", "teal", "stone");
 
     @BeforeEach
     void setUp() {
