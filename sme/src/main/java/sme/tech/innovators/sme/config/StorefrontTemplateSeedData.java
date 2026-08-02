@@ -35,8 +35,11 @@ public class StorefrontTemplateSeedData implements ApplicationRunner {
     private static final String CLASSIC_BOUTIQUE_ID = "classic-boutique";
     private static final String MINIMAL_CATALOGUE_ID = "minimal-catalogue";
 
-    /** Canonical section allowlist for classic-boutique (order matches frontend library). */
-    static final List<String> CLASSIC_BOUTIQUE_SUPPORTED_SECTIONS = List.of(
+    /**
+     * Shared section allowlist (same section types for all built-in templates;
+     * chrome + default seed differ).
+     */
+    public static final List<String> BUILTIN_SUPPORTED_SECTIONS = List.of(
             "hero",
             "featuredProducts",
             "newArrivals",
@@ -52,23 +55,24 @@ public class StorefrontTemplateSeedData implements ApplicationRunner {
             "contactCta"
     );
 
-    private static final List<String> CLASSIC_BOUTIQUE_THEMES = List.of("blue", "red");
-    private static final String CLASSIC_BOUTIQUE_VIBE = "Editorial retail";
+    /** @deprecated use {@link #BUILTIN_SUPPORTED_SECTIONS} */
+    static final List<String> CLASSIC_BOUTIQUE_SUPPORTED_SECTIONS = BUILTIN_SUPPORTED_SECTIONS;
 
-    private static final List<String> MINIMAL_CATALOGUE_SECTIONS = List.of(
-            "hero",
-            "featuredProducts",
-            "newsletter",
-            "contactCta"
-    );
-    private static final List<String> MINIMAL_CATALOGUE_THEMES = List.of("blue");
-    private static final String MINIMAL_CATALOGUE_VIBE = "Clean product focus";
+    private static final List<String> BUILTIN_THEMES = List.of(
+            "blue", "red", "ink", "forest", "teal", "stone");
+    private static final String CLASSIC_BOUTIQUE_VIBE = "Editorial retail";
+    private static final String CLASSIC_BOUTIQUE_DESCRIPTION =
+            "Editorial homepage with hero, products, promos, and value props.";
+
+    private static final String MINIMAL_CATALOGUE_VIBE = "Clean catalogue";
+    private static final String MINIMAL_CATALOGUE_DESCRIPTION =
+            "Product-first layout for multi-category retail — clear prices, stock, and easy checkout.";
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
         ensureClassicBoutique();
-        ensureMinimalCatalogueComingSoon();
+        ensureMinimalCatalogue();
     }
 
     private void ensureClassicBoutique() {
@@ -78,7 +82,7 @@ public class StorefrontTemplateSeedData implements ApplicationRunner {
                     return templateRepository.saveAndFlush(StorefrontTemplate.builder()
                             .id(CLASSIC_BOUTIQUE_ID)
                             .name("Classic Boutique")
-                            .description("Editorial homepage with hero, products, promos, and value props.")
+                            .description(CLASSIC_BOUTIQUE_DESCRIPTION)
                             .vibe(CLASSIC_BOUTIQUE_VIBE)
                             .status(StorefrontTemplateStatus.AVAILABLE)
                             .latestVersion(1)
@@ -87,33 +91,83 @@ public class StorefrontTemplateSeedData implements ApplicationRunner {
 
         if (!CLASSIC_BOUTIQUE_VIBE.equals(template.getVibe())
                 || template.getStatus() != StorefrontTemplateStatus.AVAILABLE
-                || !"Editorial homepage with hero, products, promos, and value props."
-                        .equals(template.getDescription())) {
+                || !CLASSIC_BOUTIQUE_DESCRIPTION.equals(template.getDescription())) {
             template.setVibe(CLASSIC_BOUTIQUE_VIBE);
             template.setStatus(StorefrontTemplateStatus.AVAILABLE);
-            template.setDescription("Editorial homepage with hero, products, promos, and value props.");
+            template.setDescription(CLASSIC_BOUTIQUE_DESCRIPTION);
             template.setName("Classic Boutique");
             templateRepository.save(template);
         }
 
+        refreshVersion(
+                template,
+                CLASSIC_BOUTIQUE_ID,
+                BUILTIN_THEMES,
+                BUILTIN_SUPPORTED_SECTIONS,
+                buildClassicBoutiqueDefaultConfig()
+        );
+    }
+
+    private void ensureMinimalCatalogue() {
+        StorefrontTemplate template = templateRepository.findById(MINIMAL_CATALOGUE_ID)
+                .orElseGet(() -> {
+                    log.info("Seeding storefront template: {}", MINIMAL_CATALOGUE_ID);
+                    return templateRepository.saveAndFlush(StorefrontTemplate.builder()
+                            .id(MINIMAL_CATALOGUE_ID)
+                            .name("Minimal Catalogue")
+                            .description(MINIMAL_CATALOGUE_DESCRIPTION)
+                            .vibe(MINIMAL_CATALOGUE_VIBE)
+                            .status(StorefrontTemplateStatus.AVAILABLE)
+                            .latestVersion(1)
+                            .build());
+                });
+
+        if (!MINIMAL_CATALOGUE_VIBE.equals(template.getVibe())
+                || template.getStatus() != StorefrontTemplateStatus.AVAILABLE
+                || !MINIMAL_CATALOGUE_DESCRIPTION.equals(template.getDescription())
+                || !"Minimal Catalogue".equals(template.getName())) {
+            template.setVibe(MINIMAL_CATALOGUE_VIBE);
+            template.setStatus(StorefrontTemplateStatus.AVAILABLE);
+            template.setDescription(MINIMAL_CATALOGUE_DESCRIPTION);
+            template.setName("Minimal Catalogue");
+            if (template.getLatestVersion() == null || template.getLatestVersion() < 1) {
+                template.setLatestVersion(1);
+            }
+            templateRepository.save(template);
+            log.info("Promoted storefront template '{}' to AVAILABLE", MINIMAL_CATALOGUE_ID);
+        }
+
+        refreshVersion(
+                template,
+                MINIMAL_CATALOGUE_ID,
+                BUILTIN_THEMES,
+                BUILTIN_SUPPORTED_SECTIONS,
+                buildMinimalCatalogueDefaultConfig()
+        );
+    }
+
+    private void refreshVersion(StorefrontTemplate template,
+                                String templateId,
+                                List<String> themes,
+                                List<String> sections,
+                                Map<String, Object> desiredConfig) {
         StorefrontTemplateVersion version = templateVersionRepository
-                .findByTemplateIdAndVersion(CLASSIC_BOUTIQUE_ID, 1)
+                .findByTemplateIdAndVersion(templateId, 1)
                 .orElseGet(() -> templateVersionRepository.save(StorefrontTemplateVersion.builder()
                         .template(template)
                         .version(1)
-                        .supportedThemes(CLASSIC_BOUTIQUE_THEMES)
-                        .supportedSections(CLASSIC_BOUTIQUE_SUPPORTED_SECTIONS)
-                        .defaultConfig(buildClassicBoutiqueDefaultConfig())
+                        .supportedThemes(themes)
+                        .supportedSections(sections)
+                        .defaultConfig(desiredConfig)
                         .build()));
 
-        Map<String, Object> desiredConfig = buildClassicBoutiqueDefaultConfig();
         boolean dirty = false;
-        if (!CLASSIC_BOUTIQUE_SUPPORTED_SECTIONS.equals(version.getSupportedSections())) {
-            version.setSupportedSections(CLASSIC_BOUTIQUE_SUPPORTED_SECTIONS);
+        if (!sections.equals(version.getSupportedSections())) {
+            version.setSupportedSections(sections);
             dirty = true;
         }
-        if (!CLASSIC_BOUTIQUE_THEMES.equals(version.getSupportedThemes())) {
-            version.setSupportedThemes(CLASSIC_BOUTIQUE_THEMES);
+        if (!themes.equals(version.getSupportedThemes())) {
+            version.setSupportedThemes(themes);
             dirty = true;
         }
         if (!Objects.equals(version.getDefaultConfig(), desiredConfig)) {
@@ -122,32 +176,8 @@ public class StorefrontTemplateSeedData implements ApplicationRunner {
         }
         if (dirty) {
             templateVersionRepository.save(version);
-            log.info("Refreshed storefront template '{}' v1 seed metadata", CLASSIC_BOUTIQUE_ID);
+            log.info("Refreshed storefront template '{}' v1 seed metadata", templateId);
         }
-    }
-
-    private void ensureMinimalCatalogueComingSoon() {
-        if (templateRepository.existsById(MINIMAL_CATALOGUE_ID)) {
-            return;
-        }
-
-        log.info("Seeding storefront template (coming soon): {}", MINIMAL_CATALOGUE_ID);
-        StorefrontTemplate template = templateRepository.saveAndFlush(StorefrontTemplate.builder()
-                .id(MINIMAL_CATALOGUE_ID)
-                .name("Minimal Catalogue")
-                .description("A focused product-first layout with fewer homepage sections.")
-                .vibe(MINIMAL_CATALOGUE_VIBE)
-                .status(StorefrontTemplateStatus.COMING_SOON)
-                .latestVersion(1)
-                .build());
-
-        templateVersionRepository.save(StorefrontTemplateVersion.builder()
-                .template(template)
-                .version(1)
-                .supportedThemes(MINIMAL_CATALOGUE_THEMES)
-                .supportedSections(MINIMAL_CATALOGUE_SECTIONS)
-                .defaultConfig(buildMinimalCatalogueDefaultConfig())
-                .build());
     }
 
     private Map<String, Object> buildClassicBoutiqueDefaultConfig() {
@@ -217,21 +247,26 @@ public class StorefrontTemplateSeedData implements ApplicationRunner {
         return parseConfig(json);
     }
 
+    /**
+     * Neutral multi-category seed — no fashion/seasonal language.
+     * Home bias: hero → featured → shop by category → values.
+     */
     private Map<String, Object> buildMinimalCatalogueDefaultConfig() {
         String json = """
                 {
                   "configVersion": 1,
                   "themeId": "blue",
                   "shopName": "My Store",
+                  "tagline": "Clear prices. Easy online orders.",
                   "sections": [
                     {
                       "id": "hero-1",
                       "type": "hero",
                       "visible": true,
                       "content": {
-                        "headline": "Shop the collection",
-                        "subheadline": "Simple, focused product discovery",
-                        "ctaText": "Browse",
+                        "headline": "Browse the catalogue",
+                        "subheadline": "Find what you need, check stock, and check out securely.",
+                        "ctaText": "Shop now",
                         "ctaLink": "/products"
                       }
                     },
@@ -240,8 +275,30 @@ public class StorefrontTemplateSeedData implements ApplicationRunner {
                       "type": "featuredProducts",
                       "visible": true,
                       "content": {
-                        "title": "Products",
+                        "title": "Popular products",
                         "products": []
+                      }
+                    },
+                    {
+                      "id": "categories-1",
+                      "type": "shopByCategory",
+                      "visible": true,
+                      "content": {
+                        "title": "Shop by category",
+                        "categories": []
+                      }
+                    },
+                    {
+                      "id": "features-1",
+                      "type": "features",
+                      "visible": true,
+                      "content": {
+                        "title": "Why order with us",
+                        "items": [
+                          { "icon": "truck", "title": "Reliable shipping", "description": "Trackable delivery on every order" },
+                          { "icon": "shield", "title": "Secure payment", "description": "Checkout protected with trusted payments" },
+                          { "icon": "headset", "title": "Helpful support", "description": "Questions about stock or orders? We're here" }
+                        ]
                       }
                     },
                     {
@@ -249,8 +306,8 @@ public class StorefrontTemplateSeedData implements ApplicationRunner {
                       "type": "contactCta",
                       "visible": true,
                       "content": {
-                        "headline": "Questions?",
-                        "subheadline": "We're here to help",
+                        "headline": "Need help?",
+                        "subheadline": "Contact us about products, stock, or your order",
                         "email": "",
                         "phone": ""
                       }

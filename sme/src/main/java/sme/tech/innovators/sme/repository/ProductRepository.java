@@ -170,4 +170,25 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     Optional<Product> findByWorkspaceIdAndSlugAndStatus(UUID workspaceId, String slug, ProductStatus status);
 
     Optional<Product> findByWorkspaceIdAndIdAndStatus(UUID workspaceId, UUID productId, ProductStatus status);
+
+    long countByWorkspaceIdAndStatus(UUID workspaceId, ProductStatus status);
+
+    @Query("""
+            SELECT COUNT(p)
+            FROM Product p
+            WHERE p.workspace.id = :workspaceId
+              AND p.quantityAvailable > 0
+              AND p.quantityAvailable <= :threshold
+            """)
+    long countLowStock(
+            @Param("workspaceId") UUID workspaceId,
+            @Param("threshold") int threshold);
+
+    @Query("""
+            SELECT COUNT(p)
+            FROM Product p
+            WHERE p.workspace.id = :workspaceId
+              AND p.quantityAvailable <= 0
+            """)
+    long countOutOfStock(@Param("workspaceId") UUID workspaceId);
 }

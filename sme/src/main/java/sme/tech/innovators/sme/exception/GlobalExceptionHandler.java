@@ -314,6 +314,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ErrorCodes.VALIDATION_ERROR, ex.getMessage()));
     }
 
+    @ExceptionHandler(InvalidAnalyticsQueryException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidAnalyticsQuery(InvalidAnalyticsQueryException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ErrorCodes.INVALID_ANALYTICS_QUERY, ex.getMessage()));
+    }
+
     @ExceptionHandler(InsufficientStockException.class)
     public ResponseEntity<ApiResponse<Void>> handleInsufficientStock(InsufficientStockException ex) {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)

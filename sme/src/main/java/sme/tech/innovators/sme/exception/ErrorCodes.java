@@ -60,6 +60,7 @@ public final class ErrorCodes {
     public static final String ORDER_NOT_FOUND = "ORDER_NOT_FOUND";
     /** Invalid merchant order status transition or status value. */
     public static final String VALIDATION_ERROR = "VALIDATION_ERROR";
+    public static final String INVALID_ANALYTICS_QUERY = "INVALID_ANALYTICS_QUERY";
     public static final String INSUFFICIENT_STOCK = "INSUFFICIENT_STOCK";
 
     // Payments (Paystack)
