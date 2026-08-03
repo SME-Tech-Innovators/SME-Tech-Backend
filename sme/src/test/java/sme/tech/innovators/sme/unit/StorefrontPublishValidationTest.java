@@ -59,6 +59,94 @@ class StorefrontPublishValidationTest {
     }
 
     @Test
+    void publishRejectsNullConfig() {
+        assertThrows(InvalidPublishConfigException.class,
+                () -> validator.validateForPublish(null, sections, themes));
+    }
+
+    @Test
+    void publishRejectsEmptyConfig() {
+        assertThrows(InvalidPublishConfigException.class,
+                () -> validator.validateForPublish(Map.of(), sections, themes));
+    }
+
+    @Test
+    void publishRejectsBlankShopName() {
+        Map<String, Object> config = validConfig();
+        config.put("shopName", "   ");
+        assertThrows(InvalidPublishConfigException.class,
+                () -> validator.validateForPublish(config, sections, themes));
+    }
+
+    @Test
+    void publishRejectsUnsupportedTheme() {
+        Map<String, Object> config = validConfig();
+        config.put("themeId", "neon-pink");
+        assertThrows(InvalidPublishConfigException.class,
+                () -> validator.validateForPublish(config, sections, themes));
+    }
+
+    @Test
+    void publishRejectsUnsupportedSectionType() {
+        Map<String, Object> config = validConfig();
+        config.put("sections", List.of(Map.of("id", "x-1", "type", "unknownWidget")));
+        assertThrows(InvalidPublishConfigException.class,
+                () -> validator.validateForPublish(config, sections, themes));
+    }
+
+    @Test
+    void publishRejectsDuplicatePageSlugs() {
+        Map<String, Object> config = validConfig();
+        config.put("pages", List.of(
+                Map.of("slug", "about", "title", "About"),
+                Map.of("slug", "about", "title", "About again")
+        ));
+        assertThrows(InvalidPublishConfigException.class,
+                () -> validator.validateForPublish(config, sections, themes));
+    }
+
+    @Test
+    void publishRejectsMissingConfigVersion() {
+        Map<String, Object> config = validConfig();
+        config.remove("configVersion");
+        assertThrows(InvalidPublishConfigException.class,
+                () -> validator.validateForPublish(config, sections, themes));
+    }
+
+    @Test
+    void publishRejectsSectionMissingId() {
+        Map<String, Object> config = validConfig();
+        config.put("sections", List.of(Map.of("type", "hero")));
+        assertThrows(InvalidPublishConfigException.class,
+                () -> validator.validateForPublish(config, sections, themes));
+    }
+
+    @Test
+    void publishAllowsPlaceholderFeaturedProducts() {
+        Map<String, Object> config = validConfig();
+        config.put("sections", List.of(
+                Map.of("id", "hero-1", "type", "hero"),
+                Map.of(
+                        "id", "fp-1",
+                        "type", "featuredProducts",
+                        "title", "Featured",
+                        "products", List.of(Map.of("id", "placeholder-1", "name", "Sample"))
+                )
+        ));
+        assertDoesNotThrow(() -> validator.validateForPublish(config, sections, themes));
+    }
+
+    @Test
+    void publishAllowsUniquePageSlugs() {
+        Map<String, Object> config = validConfig();
+        config.put("pages", List.of(
+                Map.of("slug", "about", "title", "About"),
+                Map.of("slug", "contact", "title", "Contact")
+        ));
+        assertDoesNotThrow(() -> validator.validateForPublish(config, sections, themes));
+    }
+
+    @Test
     void acceptsNewSectionTypes() {
         Map<String, Object> config = validConfig();
         config.put("sections", List.of(

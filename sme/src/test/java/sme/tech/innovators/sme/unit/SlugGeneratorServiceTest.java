@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
+import sme.tech.innovators.sme.exception.PublicSlugUnavailableException;
 import sme.tech.innovators.sme.exception.SlugGenerationException;
 import sme.tech.innovators.sme.repository.BusinessRepository;
 import sme.tech.innovators.sme.repository.WorkspaceRepository;
@@ -19,11 +20,12 @@ class SlugGeneratorServiceTest {
 
     private SlugGeneratorService service;
     private BusinessRepository repo;
+    private WorkspaceRepository workspaceRepository;
 
     @BeforeEach
     void setUp() {
         repo = Mockito.mock(BusinessRepository.class);
-        WorkspaceRepository workspaceRepository = Mockito.mock(WorkspaceRepository.class);
+        workspaceRepository = Mockito.mock(WorkspaceRepository.class);
         service = new SlugGeneratorService(repo, workspaceRepository);
         ReflectionTestUtils.setField(service, "maxRetries", 5);
         ReflectionTestUtils.setField(service, "minLength", 3);
@@ -77,5 +79,51 @@ class SlugGeneratorServiceTest {
         when(repo.existsBySlugAndIsDeletedFalse("acme-1")).thenReturn(false);
         String slug = service.generateUniqueSlug("acme");
         assertEquals("acme-1", slug);
+    }
+
+    // -------------------------------------------------------------------------
+    // Public workspace slug (Step 02 publish)
+    // -------------------------------------------------------------------------
+
+    @Test
+    void publicSlug_fromBusinessName() {
+        when(workspaceRepository.existsByPublicSlug("nkandu-fashion")).thenReturn(false);
+        String slug = service.generateUniquePublicSlug("Nkandu Fashion");
+        assertEquals("nkandu-fashion", slug);
+    }
+
+    @Test
+    void publicSlug_appendsHexSuffixOnConflict() {
+        when(workspaceRepository.existsByPublicSlug("nkandu-fashion")).thenReturn(true);
+        when(workspaceRepository.existsByPublicSlug(anyString())).thenAnswer(inv -> {
+            String candidate = inv.getArgument(0);
+            return "nkandu-fashion".equals(candidate);
+        });
+
+        String slug = service.generateUniquePublicSlug("Nkandu Fashion");
+        assertTrue(slug.startsWith("nkandu-fashion-"));
+        assertEquals(4, slug.substring("nkandu-fashion-".length()).length());
+    }
+
+    @Test
+    void publicSlug_reservedKeywordGetsStoreSuffix() {
+        when(workspaceRepository.existsByPublicSlug("store-store")).thenReturn(false);
+        String slug = service.generateUniquePublicSlug("store");
+        assertEquals("store-store", slug);
+    }
+
+    @Test
+    void publicSlug_tooShortThrowsUnavailable() {
+        assertThrows(PublicSlugUnavailableException.class,
+                () -> service.generateUniquePublicSlug("ab"));
+    }
+
+    @Test
+    void publicSlug_exhaustedRetriesThrowsUnavailable() {
+        ReflectionTestUtils.setField(service, "maxRetries", 2);
+        when(workspaceRepository.existsByPublicSlug(anyString())).thenReturn(true);
+
+        assertThrows(PublicSlugUnavailableException.class,
+                () -> service.generateUniquePublicSlug("nkandu-fashion"));
     }
 }
