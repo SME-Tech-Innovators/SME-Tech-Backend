@@ -3,7 +3,7 @@ spring:
     name: sme
 
   datasource:
-    url: jdbc:postgresql://learnwiselydb.postgres.database.azure.com:5432/sme_operations_db?sslmode=require
+    url: jdbc:postgresql://learnwiselydb.postgres.database.azure.com:5432/sme_operations_db?sslmode=require&currentSchema=public
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver

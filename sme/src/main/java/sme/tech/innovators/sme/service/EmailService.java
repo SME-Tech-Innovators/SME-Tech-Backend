@@ -46,7 +46,26 @@ public class EmailService {
     }
 
     @Async("emailTaskExecutor")
-    public void sendWelcomeEmail(String toEmail, String fullName, String publicLink) {
+    public void sendPasswordResetEmail(String toEmail, String fullName, String token) {
+        String normalizedFrontendUrl = normalizeFrontendUrl();
+        String resetLink = normalizedFrontendUrl + "/reset-password?token=" + token;
+        String subject = "Reset your password";
+        String textBody = "Hi " + fullName + ",\n\n"
+                + "We received a request to reset your password.\n\n"
+                + "Click the link below to set a new password:\n\n"
+                + resetLink + "\n\n"
+                + "This link expires in 1 hour. If you did not request a reset, "
+                + "you can safely ignore this email.\n\nThank you!";
+        String htmlBody = "<p>Hi " + escapeHtml(fullName) + ",</p>"
+                + "<p>We received a request to reset your password.</p>"
+                + "<p><a href=\"" + resetLink + "\">Reset your password</a></p>"
+                + "<p>This link expires in <strong>1 hour</strong>. "
+                + "If you did not request a reset, you can safely ignore this email.</p>"
+                + "<p>Thank you!</p>";
+        sendWithRetry(toEmail, subject, textBody, htmlBody, "PASSWORD_RESET_EMAIL");
+    }
+
+    @Async("emailTaskExecutor")
         String subject = "Welcome to SME Operations!";
         String textBody = "Hi " + fullName + ",\n\nYour business is now live!\n\nPublic link: " + publicLink
                 + "\n\nThank you for joining us!";

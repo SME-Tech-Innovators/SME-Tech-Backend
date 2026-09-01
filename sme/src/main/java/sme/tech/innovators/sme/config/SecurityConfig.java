@@ -64,6 +64,7 @@ public class SecurityConfig {
                     "/v3/api-docs",
                     "/actuator/health"
                 ).permitAll()
+                .requestMatchers("/api/v1/admin/**").hasRole("OWNER")
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())

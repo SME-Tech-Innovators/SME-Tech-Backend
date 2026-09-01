@@ -10,13 +10,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import sme.tech.innovators.sme.dto.request.ForgotPasswordRequest;
 import sme.tech.innovators.sme.dto.request.LoginRequest;
 import sme.tech.innovators.sme.dto.request.RefreshTokenRequest;
 import sme.tech.innovators.sme.dto.request.RegistrationRequest;
+import sme.tech.innovators.sme.dto.request.ResetPasswordRequest;
 import sme.tech.innovators.sme.dto.response.ApiResponse;
 import sme.tech.innovators.sme.dto.response.AuthResponse;
 import sme.tech.innovators.sme.dto.response.RegistrationResponse;
 import sme.tech.innovators.sme.service.AuthService;
+import sme.tech.innovators.sme.service.PasswordResetService;
 import sme.tech.innovators.sme.service.RegistrationService;
 import sme.tech.innovators.sme.service.VerificationService;
 
@@ -31,6 +34,7 @@ public class AuthController {
     private final RegistrationService registrationService;
     private final VerificationService verificationService;
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
 
     @Operation(summary = "Register a new user and business",
                description = "Creates a user account and business profile. Sends a verification email. Rate limited to 5/hour per IP and 3/hour per email.")
@@ -124,5 +128,36 @@ public class AuthController {
             return forwarded.split(",")[0].trim();
         }
         return request.getRemoteAddr();
+    }
+
+    @Operation(summary = "Request password reset",
+               description = "Sends a password reset email if the address is registered. " +
+                             "Always returns 200 to prevent user enumeration.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Reset email sent if account exists"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error")
+    })
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<String>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.requestPasswordReset(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.success(
+                "If that email address is registered, a reset link has been sent."));
+    }
+
+    @Operation(summary = "Reset password",
+               description = "Validates the reset token and sets a new password. " +
+                             "Revokes all active sessions on success.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Password reset successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Token expired or password too weak"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Invalid or already-used token")
+    })
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<String>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok(ApiResponse.success(
+                "Password reset successfully. Please log in with your new password."));
     }
 }
