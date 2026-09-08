@@ -21,6 +21,7 @@ import sme.tech.innovators.sme.security.CustomUserDetailsService;
 import sme.tech.innovators.sme.security.JwtAuthenticationFilter;
 import sme.tech.innovators.sme.service.AuthService;
 import sme.tech.innovators.sme.service.JwtService;
+import sme.tech.innovators.sme.service.PasswordResetService;
 import sme.tech.innovators.sme.service.RateLimitService;
 import sme.tech.innovators.sme.service.RegistrationService;
 import sme.tech.innovators.sme.service.VerificationService;
@@ -52,6 +53,9 @@ class AuthControllerTest {
 
     @MockBean
     private AuthService authService;
+
+    @MockBean
+    private PasswordResetService passwordResetService;
 
     // Prevents AwsSesConfig from trying to build a real SesClient
     @MockBean
