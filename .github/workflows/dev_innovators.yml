@@ -63,11 +63,15 @@ jobs:
         working-directory: sme
         run: mvn -B clean package -DskipTests
 
+      # Rename to a fixed filename so the deploy step always gets exactly one JAR
+      - name: Rename JAR to fixed filename
+        run: mv sme/target/sme-*.jar sme/target/app.jar
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: java-app
-          path: sme/target/*.jar
+          path: sme/target/app.jar
 
   deploy:
     name: Deploy to Azure
@@ -96,5 +100,4 @@ jobs:
         with:
           app-name: 'sme-operations'
           slot-name: 'Production'
-          package: '*.jar'
-          startup-command: 'java -jar /home/site/wwwroot/*.jar'
+          package: 'app.jar'
