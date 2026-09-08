@@ -17,6 +17,7 @@ import sme.tech.innovators.sme.repository.OrderRepository;
 import sme.tech.innovators.sme.service.CheckoutService;
 import sme.tech.innovators.sme.service.PublicStoreResolver;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,8 +64,8 @@ class CheckoutServiceTest {
 
     @Test
     void checkoutCreatesPendingPaymentUnpaidOrderWithSnapshots() {
-        Product product = product(15000, "Classic Tee", "SKU-TEE");
-        CartItem item = cartItem(product, 2, 15000);
+        Product product = product(new BigDecimal("150.00"), "Classic Tee", "SKU-TEE");
+        CartItem item = cartItem(product, 2, new BigDecimal("150.00"));
         Cart cart = cartWithItems(List.of(item));
 
         when(cartRepository.findByIdAndWorkspaceIdAndStatus(cart.getId(), workspace.getId(), CartStatus.ACTIVE))
@@ -82,22 +83,22 @@ class CheckoutServiceTest {
         OrderConfirmationDto dto = checkoutService.checkout("bridge-labs", checkoutRequest(cart.getId()));
 
         // Later product edits must not rewrite already-created order snapshots
-        product.setPriceAmount(99999);
+        product.setPriceAmount(new BigDecimal("999.99"));
         product.setTitle("CHANGED TITLE");
         product.setSku("CHANGED-SKU");
 
         assertThat(dto.getStatus()).isEqualTo("pending_payment");
         assertThat(dto.getPaymentStatus()).isEqualTo("unpaid");
-        assertThat(dto.getShippingAmount()).isZero();
-        assertThat(dto.getSubtotalAmount()).isEqualTo(30000);
-        assertThat(dto.getTotalAmount()).isEqualTo(30000);
+        assertThat(dto.getShippingAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(dto.getSubtotalAmount()).isEqualByComparingTo(new BigDecimal("300.00"));
+        assertThat(dto.getTotalAmount()).isEqualByComparingTo(new BigDecimal("300.00"));
         assertThat(dto.getWorkspaceId()).isEqualTo(workspace.getId().toString());
         assertThat(dto.getCartId()).isEqualTo(cart.getId().toString());
         assertThat(dto.getItems()).hasSize(1);
         assertThat(dto.getItems().get(0).getTitle()).isEqualTo("Classic Tee");
         assertThat(dto.getItems().get(0).getSku()).isEqualTo("SKU-TEE");
-        assertThat(dto.getItems().get(0).getUnitPriceAmount()).isEqualTo(15000);
-        assertThat(dto.getItems().get(0).getTotalAmount()).isEqualTo(30000);
+        assertThat(dto.getItems().get(0).getUnitPriceAmount()).isEqualByComparingTo(new BigDecimal("150.00"));
+        assertThat(dto.getItems().get(0).getTotalAmount()).isEqualByComparingTo(new BigDecimal("300.00"));
         assertThat(dto.getItems().get(0).getOrderId()).isEqualTo(dto.getId());
         assertThat(cart.getStatus()).isEqualTo(CartStatus.CONVERTED);
         verify(cartRepository).save(cart);
@@ -105,9 +106,9 @@ class CheckoutServiceTest {
 
     @Test
     void checkoutRejectsInsufficientStock() {
-        Product product = product(15000, "Classic Tee", "SKU-TEE");
+        Product product = product(new BigDecimal("150.00"), "Classic Tee", "SKU-TEE");
         product.setQuantityAvailable(1);
-        Cart cart = cartWithItems(List.of(cartItem(product, 2, 15000)));
+        Cart cart = cartWithItems(List.of(cartItem(product, 2, new BigDecimal("150.00"))));
         when(cartRepository.findByIdAndWorkspaceIdAndStatus(cart.getId(), workspace.getId(), CartStatus.ACTIVE))
                 .thenReturn(Optional.of(cart));
 
@@ -144,9 +145,9 @@ class CheckoutServiceTest {
                 .customerName("Ada")
                 .customerEmail("ada@example.com")
                 .customerPhone("+2700")
-                .subtotalAmount(1000)
-                .shippingAmount(0)
-                .totalAmount(1000)
+                .subtotalAmount(new BigDecimal("10.00"))
+                .shippingAmount(BigDecimal.ZERO)
+                .totalAmount(new BigDecimal("10.00"))
                 .currency("ZAR")
                 .status(OrderStatus.PROCESSING)
                 .paymentStatus(PaymentStatus.PAID)
@@ -179,8 +180,8 @@ class CheckoutServiceTest {
 
     @Test
     void orderTotalEqualsSubtotalWhenShippingZero() {
-        Product product = product(20000, "Hoodie", "SKU-H");
-        Cart cart = cartWithItems(List.of(cartItem(product, 2, 20000)));
+        Product product = product(new BigDecimal("200.00"), "Hoodie", "SKU-H");
+        Cart cart = cartWithItems(List.of(cartItem(product, 2, new BigDecimal("200.00"))));
         when(cartRepository.findByIdAndWorkspaceIdAndStatus(cart.getId(), workspace.getId(), CartStatus.ACTIVE))
                 .thenReturn(Optional.of(cart));
         when(orderRepository.existsByOrderNumber(any())).thenReturn(false);
@@ -194,8 +195,8 @@ class CheckoutServiceTest {
         });
 
         OrderConfirmationDto dto = checkoutService.checkout("bridge-labs", checkoutRequest(cart.getId()));
-        assertThat(dto.getTotalAmount()).isEqualTo(dto.getSubtotalAmount() + dto.getShippingAmount());
-        assertThat(dto.getTotalAmount()).isEqualTo(40000);
+        assertThat(dto.getTotalAmount()).isEqualByComparingTo(dto.getSubtotalAmount().add(dto.getShippingAmount()));
+        assertThat(dto.getTotalAmount()).isEqualByComparingTo(new BigDecimal("400.00"));
     }
 
     private CheckoutRequest checkoutRequest(UUID cartId) {
@@ -231,7 +232,7 @@ class CheckoutServiceTest {
         return cart;
     }
 
-    private CartItem cartItem(Product product, int qty, int unitPrice) {
+    private CartItem cartItem(Product product, int qty, BigDecimal unitPrice) {
         return CartItem.builder()
                 .id(UUID.randomUUID())
                 .product(product)
@@ -243,7 +244,7 @@ class CheckoutServiceTest {
                 .build();
     }
 
-    private Product product(int price, String title, String sku) {
+    private Product product(BigDecimal price, String title, String sku) {
         Product p = new Product();
         p.setId(UUID.randomUUID());
         p.setTitle(title);

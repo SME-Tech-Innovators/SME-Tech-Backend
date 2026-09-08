@@ -3,6 +3,7 @@ package sme.tech.innovators.sme.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -37,11 +38,11 @@ public class OrderItem {
     @Column(nullable = false)
     private Integer quantity;
 
-    @Column(name = "unit_price_amount", nullable = false)
-    private Integer unitPriceAmount;
+    @Column(name = "unit_price_amount", nullable = false, precision = 19, scale = 2)
+    private BigDecimal unitPriceAmount;
 
-    @Column(name = "total_amount", nullable = false)
-    private Integer totalAmount;
+    @Column(name = "total_amount", nullable = false, precision = 19, scale = 2)
+    private BigDecimal totalAmount;
 
     @Column(nullable = false, length = 3)
     private String currency;

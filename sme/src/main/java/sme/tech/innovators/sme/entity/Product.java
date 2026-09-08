@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -46,16 +47,16 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    /** Price in minor units (e.g. cents). */
-    @Column(name = "price_amount", nullable = false)
-    private Integer priceAmount;
+    /** Price in major currency units (e.g. 300.00 = R300.00). */
+    @Column(name = "price_amount", nullable = false, precision = 19, scale = 2)
+    private BigDecimal priceAmount;
 
     /**
-     * Optional compare-at (was) price in minor units.
+     * Optional compare-at (was) price in major currency units.
      * When set and strictly greater than {@link #priceAmount}, the product is on sale.
      */
-    @Column(name = "compare_at_price_amount")
-    private Integer compareAtPriceAmount;
+    @Column(name = "compare_at_price_amount", precision = 19, scale = 2)
+    private BigDecimal compareAtPriceAmount;
 
     @Column(nullable = false, length = 3)
     private String currency;

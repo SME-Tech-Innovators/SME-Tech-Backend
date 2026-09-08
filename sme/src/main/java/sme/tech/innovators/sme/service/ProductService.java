@@ -380,7 +380,7 @@ public class ProductService {
 
     private void validateActiveRequirements(String title,
                                              String sku,
-                                             Integer priceAmount,
+                                             java.math.BigDecimal priceAmount,
                                              String currency,
                                              Integer quantityAvailable) {
         if (title == null || title.isBlank()) {

@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 import sme.tech.innovators.sme.entity.ProductStatus;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -17,8 +18,8 @@ public class ProductDto {
     private String title;
     private String slug;
     private String sku;
-    private Integer priceAmount;
-    private Integer compareAtPriceAmount;
+    private BigDecimal priceAmount;
+    private BigDecimal compareAtPriceAmount;
     private String currency;
     private String priceLabel;
     private String compareAtPriceLabel;

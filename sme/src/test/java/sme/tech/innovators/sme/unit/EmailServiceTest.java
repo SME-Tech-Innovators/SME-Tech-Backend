@@ -157,8 +157,8 @@ class EmailServiceTest {
                 "Bridge Labs",
                 "bridge-labs",
                 "ORD-20260731-12345",
-                java.util.List.of(new EmailService.OrderLine("Tee", 2, 5000, "ZAR")),
-                5000,
+                java.util.List.of(new EmailService.OrderLine("Tee", 2, new java.math.BigDecimal("50.00"), "ZAR")),
+                new java.math.BigDecimal("50.00"),
                 "ZAR");
 
         verify(sesClient).sendEmail(captor.capture());

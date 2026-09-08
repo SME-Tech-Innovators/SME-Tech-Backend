@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 import sme.tech.innovators.sme.exception.InvalidProductDataException;
 import sme.tech.innovators.sme.exception.InvalidProductPriceException;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.text.NumberFormat;
 import java.util.Currency;
@@ -25,11 +26,11 @@ public class ProductNormalizationHelper {
         return value;
     }
 
-    public void validatePriceAmount(Integer priceAmount) {
+    public void validatePriceAmount(BigDecimal priceAmount) {
         if (priceAmount == null) {
             throw new InvalidProductPriceException("priceAmount is required");
         }
-        if (priceAmount < 0) {
+        if (priceAmount.compareTo(BigDecimal.ZERO) < 0) {
             throw new InvalidProductPriceException("priceAmount must be >= 0");
         }
     }
@@ -38,30 +39,30 @@ public class ProductNormalizationHelper {
      * Validates optional compare-at price. Null is allowed (not on sale).
      * When set, must be strictly greater than {@code priceAmount}.
      */
-    public void validateCompareAtPriceAmount(Integer compareAtPriceAmount, Integer priceAmount) {
+    public void validateCompareAtPriceAmount(BigDecimal compareAtPriceAmount, BigDecimal priceAmount) {
         if (compareAtPriceAmount == null) {
             return;
         }
-        if (compareAtPriceAmount < 0) {
+        if (compareAtPriceAmount.compareTo(BigDecimal.ZERO) < 0) {
             throw new InvalidProductPriceException("compareAtPriceAmount must be >= 0");
         }
         if (priceAmount == null) {
             throw new InvalidProductPriceException("priceAmount is required when setting compareAtPriceAmount");
         }
-        if (compareAtPriceAmount <= priceAmount) {
+        if (compareAtPriceAmount.compareTo(priceAmount) <= 0) {
             throw new InvalidProductPriceException(
                     "compareAtPriceAmount must be greater than priceAmount");
         }
     }
 
     /** Derived merchandising flag — not persisted. */
-    public boolean isOnSale(Integer compareAtPriceAmount, Integer priceAmount) {
+    public boolean isOnSale(BigDecimal compareAtPriceAmount, BigDecimal priceAmount) {
         return compareAtPriceAmount != null
                 && priceAmount != null
-                && compareAtPriceAmount > priceAmount;
+                && compareAtPriceAmount.compareTo(priceAmount) > 0;
     }
 
-    public String formatPriceLabel(Integer priceAmount, String currency) {
+    public String formatPriceLabel(BigDecimal priceAmount, String currency) {
         if (priceAmount == null || currency == null) {
             return null;
         }
@@ -71,7 +72,7 @@ public class ProductNormalizationHelper {
         } catch (IllegalArgumentException ignored) {
             // keep default
         }
-        return format.format(priceAmount / 100.0);
+        return format.format(priceAmount);
     }
 
     public void validateOptionalUrl(String url, String fieldName) {

@@ -33,8 +33,8 @@ class OrderConfirmationMailerTest {
                 .customerName("Ada")
                 .customerEmail("  ")
                 .customerPhone("+2700")
-                .subtotalAmount(100)
-                .totalAmount(100)
+                .subtotalAmount(new java.math.BigDecimal("1.00"))
+                .totalAmount(new java.math.BigDecimal("1.00"))
                 .currency("ZAR")
                 .build();
         when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
@@ -55,7 +55,7 @@ class OrderConfirmationMailerTest {
         OrderItem item = OrderItem.builder()
                 .title("Tee")
                 .quantity(1)
-                .totalAmount(2500)
+                .totalAmount(new java.math.BigDecimal("25.00"))
                 .currency("ZAR")
                 .build();
         Order order = Order.builder()
@@ -65,8 +65,8 @@ class OrderConfirmationMailerTest {
                 .customerName("Ada")
                 .customerEmail("ada@example.com")
                 .customerPhone("+2700")
-                .subtotalAmount(2500)
-                .totalAmount(2500)
+                .subtotalAmount(new java.math.BigDecimal("25.00"))
+                .totalAmount(new java.math.BigDecimal("25.00"))
                 .currency("ZAR")
                 .confirmationEmailSent(false)
                 .items(List.of(item))
@@ -84,7 +84,7 @@ class OrderConfirmationMailerTest {
                 eq("bridge-labs"),
                 eq("ORD-9"),
                 anyList(),
-                eq(2500),
+                eq(new java.math.BigDecimal("25.00")),
                 eq("ZAR"));
     }
 
@@ -96,8 +96,8 @@ class OrderConfirmationMailerTest {
                 .customerName("Ada")
                 .customerEmail("ada@example.com")
                 .customerPhone("+2700")
-                .subtotalAmount(100)
-                .totalAmount(100)
+                .subtotalAmount(new java.math.BigDecimal("1.00"))
+                .totalAmount(new java.math.BigDecimal("1.00"))
                 .currency("ZAR")
                 .confirmationEmailSent(true)
                 .build();

@@ -3,6 +3,7 @@ package sme.tech.innovators.sme.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -30,8 +31,8 @@ public class CartItem {
     private Integer quantity;
 
     /** Price snapshot at time of adding to cart — backend-owned, never trusted from frontend. */
-    @Column(name = "unit_price_amount", nullable = false)
-    private Integer unitPriceAmount;
+    @Column(name = "unit_price_amount", nullable = false, precision = 19, scale = 2)
+    private BigDecimal unitPriceAmount;
 
     @Column(nullable = false, length = 3)
     private String currency;

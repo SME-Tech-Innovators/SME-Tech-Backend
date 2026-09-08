@@ -6,6 +6,7 @@ import sme.tech.innovators.sme.exception.InvalidProductDataException;
 import sme.tech.innovators.sme.exception.InvalidProductPriceException;
 import sme.tech.innovators.sme.service.ProductNormalizationHelper;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,34 +33,35 @@ class ProductNormalizationHelperTest {
 
     @Test
     void rejectsNegativePrice() {
-        assertThrows(InvalidProductPriceException.class, () -> helper.validatePriceAmount(-1));
+        assertThrows(InvalidProductPriceException.class,
+                () -> helper.validatePriceAmount(new BigDecimal("-1")));
     }
 
     @Test
     void rejectsCompareAtNotGreaterThanPrice() {
         assertThrows(InvalidProductPriceException.class,
-                () -> helper.validateCompareAtPriceAmount(100, 100));
+                () -> helper.validateCompareAtPriceAmount(new BigDecimal("100.00"), new BigDecimal("100.00")));
         assertThrows(InvalidProductPriceException.class,
-                () -> helper.validateCompareAtPriceAmount(50, 100));
+                () -> helper.validateCompareAtPriceAmount(new BigDecimal("50.00"), new BigDecimal("100.00")));
     }
 
     @Test
     void acceptsValidCompareAtPrice() {
-        assertDoesNotThrow(() -> helper.validateCompareAtPriceAmount(24900, 19900));
-        assertDoesNotThrow(() -> helper.validateCompareAtPriceAmount(null, 19900));
+        assertDoesNotThrow(() -> helper.validateCompareAtPriceAmount(new BigDecimal("249.00"), new BigDecimal("199.00")));
+        assertDoesNotThrow(() -> helper.validateCompareAtPriceAmount(null, new BigDecimal("199.00")));
     }
 
     @Test
     void derivesOnSaleFlag() {
-        assertTrue(helper.isOnSale(24900, 19900));
-        assertFalse(helper.isOnSale(null, 19900));
-        assertFalse(helper.isOnSale(19900, 19900));
-        assertFalse(helper.isOnSale(100, 19900));
+        assertTrue(helper.isOnSale(new BigDecimal("249.00"), new BigDecimal("199.00")));
+        assertFalse(helper.isOnSale(null, new BigDecimal("199.00")));
+        assertFalse(helper.isOnSale(new BigDecimal("199.00"), new BigDecimal("199.00")));
+        assertFalse(helper.isOnSale(new BigDecimal("1.00"), new BigDecimal("199.00")));
     }
 
     @Test
     void formatsZarPriceLabel() {
-        String label = helper.formatPriceLabel(24900, "ZAR");
+        String label = helper.formatPriceLabel(new BigDecimal("249.00"), "ZAR");
         assertNotNull(label);
         assertTrue(label.contains("249"));
     }

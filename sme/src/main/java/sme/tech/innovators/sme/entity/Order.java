@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,15 +48,15 @@ public class Order {
     @Column(name = "shipping_address")
     private Map<String, Object> shippingAddress;
 
-    @Column(name = "subtotal_amount", nullable = false)
-    private Integer subtotalAmount;
+    @Column(name = "subtotal_amount", nullable = false, precision = 19, scale = 2)
+    private BigDecimal subtotalAmount;
 
-    @Column(name = "shipping_amount", nullable = false)
+    @Column(name = "shipping_amount", nullable = false, precision = 19, scale = 2)
     @Builder.Default
-    private Integer shippingAmount = 0;
+    private BigDecimal shippingAmount = BigDecimal.ZERO;
 
-    @Column(name = "total_amount", nullable = false)
-    private Integer totalAmount;
+    @Column(name = "total_amount", nullable = false, precision = 19, scale = 2)
+    private BigDecimal totalAmount;
 
     @Column(nullable = false, length = 3)
     @Builder.Default
@@ -101,7 +102,7 @@ public class Order {
         this.updatedAt = now;
         if (this.status == null) this.status = OrderStatus.PENDING_PAYMENT;
         if (this.paymentStatus == null) this.paymentStatus = PaymentStatus.UNPAID;
-        if (this.shippingAmount == null) this.shippingAmount = 0;
+        if (this.shippingAmount == null) this.shippingAmount = BigDecimal.ZERO;
         if (this.currency == null) this.currency = "ZAR";
     }
 

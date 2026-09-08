@@ -3,6 +3,7 @@ package sme.tech.innovators.sme.dto.response;
 import lombok.Builder;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -19,9 +20,9 @@ public class OrderConfirmationDto {
     private String customerPhone;
     private Map<String, Object> shippingAddress;
     private List<OrderItemDto> items;
-    private Integer subtotalAmount;
-    private Integer shippingAmount;
-    private Integer totalAmount;
+    private BigDecimal subtotalAmount;
+    private BigDecimal shippingAmount;
+    private BigDecimal totalAmount;
     private String currency;
     private String status;
     private String paymentStatus;

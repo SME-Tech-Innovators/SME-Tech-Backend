@@ -12,6 +12,7 @@ import sme.tech.innovators.sme.exception.*;
 import sme.tech.innovators.sme.repository.CartRepository;
 import sme.tech.innovators.sme.repository.OrderRepository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -67,7 +68,8 @@ public class CheckoutService {
                         "Not enough stock for this product.", available);
             }
 
-            int lineTotal = cartItem.getUnitPriceAmount() * cartItem.getQuantity();
+            BigDecimal lineTotal = cartItem.getUnitPriceAmount()
+                    .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
             orderItems.add(OrderItem.builder()
                     .product(product)
                     .title(product.getTitle())
@@ -79,9 +81,11 @@ public class CheckoutService {
                     .build());
         }
 
-        int subtotal = orderItems.stream().mapToInt(OrderItem::getTotalAmount).sum();
-        int shippingAmount = 0;
-        int total = subtotal + shippingAmount;
+        BigDecimal subtotal = orderItems.stream()
+                .map(OrderItem::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal shippingAmount = BigDecimal.ZERO;
+        BigDecimal total = subtotal.add(shippingAmount);
 
         Order order = Order.builder()
                 .workspace(workspace)
