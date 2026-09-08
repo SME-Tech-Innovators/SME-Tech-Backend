@@ -3,6 +3,7 @@ package sme.tech.innovators.sme.dto.response;
 import lombok.Builder;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,8 +16,8 @@ public class CartDto {
     private String status;
     private String currency;
     private List<CartItemDto> items;
-    private Integer subtotalAmount;
-    private Integer totalAmount;
+    private BigDecimal subtotalAmount;
+    private BigDecimal totalAmount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

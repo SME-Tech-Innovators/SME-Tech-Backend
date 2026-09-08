@@ -51,10 +51,10 @@ public class WorkspaceAnalyticsService {
                 workspaceId, range.fromInclusive(), range.toExclusive());
         Object[] paid = unwrapAggregate(orderRepository.sumPaidRevenueAndCount(
                 workspaceId, range.fromInclusive(), range.toExclusive()));
-        long revenueMinor = toLong(paid[0]);
+        BigDecimal revenueRaw = toBigDecimal(paid[0]);
         long ordersPaidCount = toLong(paid[1]);
 
-        BigDecimal revenuePaid = toMajor(revenueMinor);
+        BigDecimal revenuePaid = revenueRaw.setScale(2, RoundingMode.HALF_UP);
         BigDecimal aov = ordersPaidCount == 0
                 ? BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP)
                 : revenuePaid.divide(BigDecimal.valueOf(ordersPaidCount), 2, RoundingMode.HALF_UP);
@@ -89,19 +89,19 @@ public class WorkspaceAnalyticsService {
 
         List<Object[]> rows = orderRepository.aggregatePaidTimeseriesByDay(
                 workspaceId, range.fromInclusive(), range.toExclusive());
-        Map<LocalDate, long[]> byDay = new HashMap<>();
+        Map<LocalDate, Object[]> byDay = new HashMap<>();
         for (Object[] row : rows) {
             LocalDate day = toLocalDate(row[0]);
-            byDay.put(day, new long[]{toLong(row[1]), toLong(row[2])});
+            byDay.put(day, new Object[]{row[1], row[2]});
         }
 
         List<AnalyticsTimeseriesDto.Point> points = new ArrayList<>();
         for (LocalDate d = range.fromDate(); !d.isAfter(range.toDate()); d = d.plusDays(1)) {
-            long[] vals = byDay.getOrDefault(d, new long[]{0L, 0L});
+            Object[] vals = byDay.getOrDefault(d, new Object[]{BigDecimal.ZERO, 0L});
             points.add(AnalyticsTimeseriesDto.Point.builder()
                     .date(d.toString())
-                    .revenue(toMajor(vals[0]))
-                    .orders(vals[1])
+                    .revenue(toBigDecimal(vals[0]).setScale(2, RoundingMode.HALF_UP))
+                    .orders(toLong(vals[1]))
                     .build());
         }
         return AnalyticsTimeseriesDto.builder().points(points).build();
@@ -137,7 +137,7 @@ public class WorkspaceAnalyticsService {
                     .productId(toUuidOrNull(row[0]))
                     .title(row[1] != null ? String.valueOf(row[1]) : "Product")
                     .unitsSold(toLong(row[2]))
-                    .revenue(toMajor(toLong(row[3])))
+                    .revenue(toBigDecimal(row[3]).setScale(2, RoundingMode.HALF_UP))
                     .build());
         }
 
@@ -147,7 +147,7 @@ public class WorkspaceAnalyticsService {
             byCategory.add(AnalyticsBreakdownsDto.CategoryRevenue.builder()
                     .categoryId(toUuidOrNull(row[0]))
                     .name(row[1] != null ? String.valueOf(row[1]) : "Uncategorized")
-                    .revenue(toMajor(toLong(row[2])))
+                    .revenue(toBigDecimal(row[2]).setScale(2, RoundingMode.HALF_UP))
                     .build());
         }
 
@@ -193,8 +193,28 @@ public class WorkspaceAnalyticsService {
         }
     }
 
-    public static BigDecimal toMajor(long minorUnits) {
-        return BigDecimal.valueOf(minorUnits).movePointLeft(2).setScale(2, RoundingMode.HALF_UP);
+    /**
+     * Amounts are now stored in major units (e.g. 300.00 = R300.00).
+     * This method is kept for API compatibility but simply scales to 2 decimal places.
+     * @deprecated Use {@link #toBigDecimal(Object)} directly.
+     */
+    @Deprecated
+    public static BigDecimal toMajor(long majorUnits) {
+        return BigDecimal.valueOf(majorUnits).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    /** Converts a raw DB aggregate value (BigDecimal, Long, Integer, or null) to BigDecimal. */
+    public static BigDecimal toBigDecimal(Object value) {
+        if (value == null) {
+            return BigDecimal.ZERO;
+        }
+        if (value instanceof BigDecimal bd) {
+            return bd;
+        }
+        if (value instanceof Number n) {
+            return new BigDecimal(n.toString());
+        }
+        return new BigDecimal(String.valueOf(value));
     }
 
     private static Object[] unwrapAggregate(Object raw) {

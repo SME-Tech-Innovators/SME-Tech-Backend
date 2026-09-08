@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -17,7 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class EmailService {
 
-    public record OrderLine(String title, int quantity, int lineTotalAmount, String currency) {}
+    public record OrderLine(String title, int quantity, BigDecimal lineTotalAmount, String currency) {}
 
     private final SesClient sesClient;
     private final AuditService auditService;
@@ -46,6 +47,26 @@ public class EmailService {
     }
 
     @Async("emailTaskExecutor")
+    public void sendPasswordResetEmail(String toEmail, String fullName, String token) {
+        String normalizedFrontendUrl = normalizeFrontendUrl();
+        String resetLink = normalizedFrontendUrl + "/reset-password?token=" + token;
+        String subject = "Reset your password";
+        String textBody = "Hi " + fullName + ",\n\n"
+                + "We received a request to reset your password.\n\n"
+                + "Click the link below to set a new password:\n\n"
+                + resetLink + "\n\n"
+                + "This link expires in 1 hour. If you did not request a reset, "
+                + "you can safely ignore this email.\n\nThank you!";
+        String htmlBody = "<p>Hi " + escapeHtml(fullName) + ",</p>"
+                + "<p>We received a request to reset your password.</p>"
+                + "<p><a href=\"" + resetLink + "\">Reset your password</a></p>"
+                + "<p>This link expires in <strong>1 hour</strong>. "
+                + "If you did not request a reset, you can safely ignore this email.</p>"
+                + "<p>Thank you!</p>";
+        sendWithRetry(toEmail, subject, textBody, htmlBody, "PASSWORD_RESET_EMAIL");
+    }
+
+    @Async("emailTaskExecutor")
     public void sendWelcomeEmail(String toEmail, String fullName, String publicLink) {
         String subject = "Welcome to SME Operations!";
         String textBody = "Hi " + fullName + ",\n\nYour business is now live!\n\nPublic link: " + publicLink
@@ -64,7 +85,7 @@ public class EmailService {
                                            String storeSlug,
                                            String orderNumber,
                                            List<OrderLine> lines,
-                                           int totalAmount,
+                                           BigDecimal totalAmount,
                                            String currency) {
         String name = customerName != null && !customerName.isBlank() ? customerName : "there";
         String store = storeName != null && !storeName.isBlank() ? storeName : "the store";
@@ -178,11 +199,11 @@ public class EmailService {
         return frontendUrl.endsWith("/") ? frontendUrl.substring(0, frontendUrl.length() - 1) : frontendUrl;
     }
 
-    static String formatMoney(int amountMinor, String currency) {
+    static String formatMoney(BigDecimal amount, String currency) {
         String code = currency == null || currency.isBlank() ? "ZAR" : currency.toUpperCase(Locale.ROOT);
-        int abs = Math.abs(amountMinor);
-        String major = String.format(Locale.ROOT, "%d.%02d", abs / 100, abs % 100);
-        if (amountMinor < 0) {
+        BigDecimal abs = amount == null ? BigDecimal.ZERO : amount.abs();
+        String major = String.format(Locale.ROOT, "%.2f", abs);
+        if (amount != null && amount.compareTo(BigDecimal.ZERO) < 0) {
             major = "-" + major;
         }
         return code + " " + major;

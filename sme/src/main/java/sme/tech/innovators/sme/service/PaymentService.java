@@ -81,9 +81,15 @@ public class PaymentService {
                 storeSlug,
                 order.getId().toString());
 
+        // Paystack requires the amount in minor units (cents). Convert from major units.
+        int amountMinorUnits = order.getTotalAmount()
+                .multiply(java.math.BigDecimal.valueOf(100))
+                .setScale(0, java.math.RoundingMode.HALF_UP)
+                .intValueExact();
+
         Map<String, Object> initData = paystackClient.initializeTransaction(
                 email,
-                order.getTotalAmount(),
+                amountMinorUnits,
                 order.getCurrency(),
                 reference,
                 callbackUrl,

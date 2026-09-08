@@ -1,11 +1,13 @@
 package sme.tech.innovators.sme.dto.request;
 
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import sme.tech.innovators.sme.entity.ProductStatus;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -22,12 +24,12 @@ public class CreateProductRequest {
     private String slug;
 
     @NotNull(message = "priceAmount is required")
-    @Min(value = 0, message = "priceAmount must be >= 0")
-    private Integer priceAmount;
+    @DecimalMin(value = "0.00", message = "priceAmount must be >= 0")
+    private BigDecimal priceAmount;
 
-    /** Optional compare-at (was) price in minor units; must be > priceAmount when set. */
-    @Min(value = 0, message = "compareAtPriceAmount must be >= 0")
-    private Integer compareAtPriceAmount;
+    /** Optional compare-at (was) price; must be > priceAmount when set. */
+    @DecimalMin(value = "0.00", message = "compareAtPriceAmount must be >= 0")
+    private BigDecimal compareAtPriceAmount;
 
     /** Units available to sell. Required; integer ≥ 0. */
     @NotNull(message = "quantityAvailable is required")

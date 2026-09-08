@@ -1,5 +1,6 @@
 package sme.tech.innovators.sme.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -30,8 +31,12 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
+    /**
+     * Authenticates the user and issues a new JWT access token + refresh token.
+     * Records the client IP and User-Agent for session tracking.
+     */
     @Transactional
-    public AuthResponse login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request, HttpServletRequest httpRequest) {
         User user = userRepository.findByEmailAndIsDeletedFalse(request.getEmail())
                 .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
@@ -45,12 +50,19 @@ public class AuthService {
 
         String accessToken = jwtService.generateAccessToken(user);
 
+        String ip = extractIp(httpRequest);
+        String userAgent = extractUserAgent(httpRequest);
+
         RefreshToken refreshToken = RefreshToken.builder()
                 .token(UUID.randomUUID().toString())
                 .userId(user.getId())
                 .expiresAt(LocalDateTime.now().plusDays(7))
+                .ipAddress(ip)
+                .userAgent(userAgent)
                 .build();
         refreshTokenRepository.save(refreshToken);
+
+        log.info("User {} logged in from IP={}", user.getEmail(), ip);
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
@@ -59,6 +71,10 @@ public class AuthService {
                 .build();
     }
 
+    /**
+     * Validates the refresh token and issues a new access token.
+     * Updates lastUsedAt so you can see when the session was last active.
+     */
     @Transactional
     public AuthResponse refresh(String refreshTokenValue) {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenValue)
@@ -74,6 +90,10 @@ public class AuthService {
         User user = userRepository.findById(refreshToken.getUserId())
                 .orElseThrow(() -> new InvalidTokenException("User not found"));
 
+        // Stamp last-used so we know the session is still active
+        refreshToken.setLastUsedAt(LocalDateTime.now());
+        refreshTokenRepository.save(refreshToken);
+
         String newAccessToken = jwtService.generateAccessToken(user);
 
         return AuthResponse.builder()
@@ -83,11 +103,36 @@ public class AuthService {
                 .build();
     }
 
+    /**
+     * Revokes the refresh token, effectively ending the session.
+     * Records revokedAt so you can see exactly when the user logged out.
+     */
     @Transactional
     public void logout(String refreshTokenValue) {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenValue)
                 .orElseThrow(() -> new InvalidTokenException("Refresh token not found"));
+
         refreshToken.setRevoked(true);
+        refreshToken.setRevokedAt(LocalDateTime.now());
         refreshTokenRepository.save(refreshToken);
+
+        log.info("Refresh token revoked for userId={}", refreshToken.getUserId());
+    }
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+
+    private String extractIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
+    }
+
+    private String extractUserAgent(HttpServletRequest request) {
+        String ua = request.getHeader("User-Agent");
+        if (ua == null) return "unknown";
+        // Truncate to match column length (512)
+        return ua.length() > 512 ? ua.substring(0, 512) : ua;
     }
 }

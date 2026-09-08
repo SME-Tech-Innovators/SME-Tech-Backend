@@ -55,7 +55,7 @@ class WorkspaceAnalyticsServiceTest {
 
         when(orderRepository.countOrdersInRange(eq(workspaceId), any(), any())).thenReturn(48L);
         when(orderRepository.sumPaidRevenueAndCount(eq(workspaceId), any(), any()))
-                .thenReturn(new Object[]{1_250_000L, 41L}); // R12,500.00 / 41
+                .thenReturn(new Object[]{new BigDecimal("12500.00"), 41L}); // R12,500.00 / 41
         when(orderRepository.findLatestPaidCurrency(eq(workspaceId), any(), any()))
                 .thenReturn(Optional.of("ZAR"));
         when(productRepository.countByWorkspaceIdAndStatus(workspaceId, ProductStatus.ACTIVE))
@@ -82,8 +82,8 @@ class WorkspaceAnalyticsServiceTest {
         LocalDate to = LocalDate.of(2026, 7, 3);
         when(orderRepository.aggregatePaidTimeseriesByDay(eq(workspaceId), any(), any()))
                 .thenReturn(List.<Object[]>of(
-                        new Object[]{LocalDate.of(2026, 7, 1), 120_000L, 4L},
-                        new Object[]{LocalDate.of(2026, 7, 3), 80_000L, 3L}
+                        new Object[]{LocalDate.of(2026, 7, 1), new BigDecimal("1200.00"), 4L},
+                        new Object[]{LocalDate.of(2026, 7, 3), new BigDecimal("800.00"), 3L}
                 ));
 
         AnalyticsTimeseriesDto dto = service.timeseries(workspaceId, userId, from, to, "day");
@@ -115,9 +115,9 @@ class WorkspaceAnalyticsServiceTest {
         when(orderRepository.countOrdersByPaymentStatus(eq(workspaceId), any(), any()))
                 .thenReturn(List.<Object[]>of(new Object[]{"PAID", 18L}));
         when(orderRepository.topProductsByPaidRevenue(eq(workspaceId), any(), any(), eq(10)))
-                .thenReturn(List.<Object[]>of(new Object[]{productId, "Dress", 12L, 360_000L}));
+                .thenReturn(List.<Object[]>of(new Object[]{productId, "Dress", 12L, new BigDecimal("3600.00")}));
         when(orderRepository.revenueByCategory(eq(workspaceId), any(), any()))
-                .thenReturn(List.<Object[]>of(new Object[]{categoryId, "Apparel", 500_000L}));
+                .thenReturn(List.<Object[]>of(new Object[]{categoryId, "Apparel", new BigDecimal("5000.00")}));
 
         AnalyticsBreakdownsDto dto = service.breakdowns(
                 workspaceId, userId, LocalDate.of(2026, 7, 1), LocalDate.of(2026, 7, 31));
@@ -143,7 +143,9 @@ class WorkspaceAnalyticsServiceTest {
     }
 
     @Test
-    void toMajor_convertsCents() {
-        assertThat(WorkspaceAnalyticsService.toMajor(12500)).isEqualByComparingTo(new BigDecimal("125.00"));
+    void toMajor_returnsScaledValue() {
+        // toMajor now just scales to 2 d.p. — amounts are already in major units
+        assertThat(WorkspaceAnalyticsService.toMajor(125)).isEqualByComparingTo(new BigDecimal("125.00"));
+        assertThat(WorkspaceAnalyticsService.toMajor(0)).isEqualByComparingTo(BigDecimal.ZERO);
     }
 }

@@ -88,7 +88,7 @@ public class OrderConfirmationMailer {
                 lines.add(new EmailService.OrderLine(
                         item.getTitle(),
                         item.getQuantity(),
-                        item.getTotalAmount() != null ? item.getTotalAmount() : 0,
+                        item.getTotalAmount() != null ? item.getTotalAmount() : java.math.BigDecimal.ZERO,
                         item.getCurrency() != null ? item.getCurrency() : order.getCurrency()
                 ));
             }

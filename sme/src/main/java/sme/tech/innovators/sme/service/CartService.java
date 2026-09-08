@@ -12,6 +12,7 @@ import sme.tech.innovators.sme.repository.CartItemRepository;
 import sme.tech.innovators.sme.repository.CartRepository;
 import sme.tech.innovators.sme.repository.ProductRepository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -160,9 +161,9 @@ public class CartService {
                 .map(this::toCartItemDto)
                 .collect(Collectors.toList());
 
-        int subtotal = itemDtos.stream()
-                .mapToInt(CartItemDto::getLineTotalAmount)
-                .sum();
+        BigDecimal subtotal = itemDtos.stream()
+                .map(CartItemDto::getLineTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return CartDto.builder()
                 .id(cart.getId().toString())
@@ -185,7 +186,8 @@ public class CartService {
                 ? product.getMainImage().getUrl()
                 : null;
 
-        int lineTotal = item.getUnitPriceAmount() * item.getQuantity();
+        BigDecimal lineTotal = item.getUnitPriceAmount()
+                .multiply(BigDecimal.valueOf(item.getQuantity()));
         return CartItemDto.builder()
                 .id(item.getId().toString())
                 .cartId(item.getCart().getId().toString())

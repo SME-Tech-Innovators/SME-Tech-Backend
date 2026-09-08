@@ -1,11 +1,13 @@
 package sme.tech.innovators.sme.integration;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.mock.web.MockHttpServletRequest;
 import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -48,9 +50,13 @@ class AuthServiceIntegrationTest {
     @MockBean private S3Presigner s3Presigner;
 
     private User verifiedUser;
+    private HttpServletRequest mockHttpRequest;
 
     @BeforeEach
     void setUp() {
+        MockHttpServletRequest httpReq = new MockHttpServletRequest();
+        httpReq.setRemoteAddr("127.0.0.1");
+        mockHttpRequest = httpReq;
         verifiedUser = new User();
         verifiedUser.setEmail("auth@example.com");
         verifiedUser.setPassword(passwordEncoder.encode("SecurePass1!"));
@@ -66,7 +72,7 @@ class AuthServiceIntegrationTest {
         req.setEmail("auth@example.com");
         req.setPassword("SecurePass1!");
 
-        AuthResponse response = authService.login(req);
+        AuthResponse response = authService.login(req, mockHttpRequest);
         assertNotNull(response.getAccessToken());
         assertNotNull(response.getRefreshToken());
         assertEquals(900L, response.getExpiresIn());
@@ -81,7 +87,7 @@ class AuthServiceIntegrationTest {
         req.setEmail("auth@example.com");
         req.setPassword("SecurePass1!");
 
-        assertThrows(AccountNotVerifiedException.class, () -> authService.login(req));
+        assertThrows(AccountNotVerifiedException.class, () -> authService.login(req, mockHttpRequest));
     }
 
     @Test
@@ -90,7 +96,7 @@ class AuthServiceIntegrationTest {
         req.setEmail("auth@example.com");
         req.setPassword("WrongPass1!");
 
-        assertThrows(BadCredentialsException.class, () -> authService.login(req));
+        assertThrows(BadCredentialsException.class, () -> authService.login(req, mockHttpRequest));
     }
 
     @Test
@@ -98,7 +104,7 @@ class AuthServiceIntegrationTest {
         LoginRequest req = new LoginRequest();
         req.setEmail("auth@example.com");
         req.setPassword("SecurePass1!");
-        AuthResponse loginResponse = authService.login(req);
+        AuthResponse loginResponse = authService.login(req, mockHttpRequest);
 
         AuthResponse refreshResponse = authService.refresh(loginResponse.getRefreshToken());
         assertNotNull(refreshResponse.getAccessToken());
@@ -122,7 +128,7 @@ class AuthServiceIntegrationTest {
         LoginRequest req = new LoginRequest();
         req.setEmail("auth@example.com");
         req.setPassword("SecurePass1!");
-        AuthResponse loginResponse = authService.login(req);
+        AuthResponse loginResponse = authService.login(req, mockHttpRequest);
 
         authService.logout(loginResponse.getRefreshToken());
 

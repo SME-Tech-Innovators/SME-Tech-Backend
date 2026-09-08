@@ -17,6 +17,7 @@ import sme.tech.innovators.sme.repository.ProductRepository;
 import sme.tech.innovators.sme.service.CartService;
 import sme.tech.innovators.sme.service.PublicStoreResolver;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -93,7 +94,7 @@ class CartServiceTest {
         Cart cart = activeCart();
         stubActiveCart(cart);
 
-        Product product = product(10000);
+        Product product = product(new BigDecimal("100.00"));
         when(productRepository.findByWorkspaceIdAndIdAndStatus(workspace.getId(), product.getId(), ProductStatus.ACTIVE))
                 .thenReturn(Optional.of(product));
 
@@ -102,7 +103,7 @@ class CartServiceTest {
                 .cart(cart)
                 .product(product)
                 .quantity(1)
-                .unitPriceAmount(10000)
+                .unitPriceAmount(new BigDecimal("100.00"))
                 .currency("ZAR")
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -114,13 +115,13 @@ class CartServiceTest {
         when(cartItemRepository.save(existing)).thenReturn(existing);
         when(cartRepository.findById(cart.getId())).thenReturn(Optional.of(cart));
 
-        product.setPriceAmount(99999); // later product price change must not affect snapshot
+        product.setPriceAmount(new BigDecimal("999.99")); // later product price change must not affect snapshot
         CartDto dto = cartService.addItem("bridge-labs", cart.getId().toString(), product.getId().toString(), 2);
 
         assertThat(existing.getQuantity()).isEqualTo(3);
-        assertThat(existing.getUnitPriceAmount()).isEqualTo(10000);
-        assertThat(dto.getSubtotalAmount()).isEqualTo(30000);
-        assertThat(dto.getTotalAmount()).isEqualTo(30000);
+        assertThat(existing.getUnitPriceAmount()).isEqualByComparingTo(new BigDecimal("100.00"));
+        assertThat(dto.getSubtotalAmount()).isEqualByComparingTo(new BigDecimal("300.00"));
+        assertThat(dto.getTotalAmount()).isEqualByComparingTo(new BigDecimal("300.00"));
         assertThat(dto.getItems().get(0).getCartId()).isEqualTo(cart.getId().toString());
     }
 
@@ -128,7 +129,7 @@ class CartServiceTest {
     void addItemRejectsWhenQuantityExceedsStock() {
         Cart cart = activeCart();
         stubActiveCart(cart);
-        Product product = product(10000);
+        Product product = product(new BigDecimal("100.00"));
         product.setQuantityAvailable(2);
         when(productRepository.findByWorkspaceIdAndIdAndStatus(
                 workspace.getId(), product.getId(), ProductStatus.ACTIVE))
@@ -176,7 +177,7 @@ class CartServiceTest {
                 .thenReturn(Optional.of(cart));
     }
 
-    private Product product(int price) {
+    private Product product(BigDecimal price) {
         Product p = new Product();
         p.setId(UUID.randomUUID());
         p.setTitle("Tee");
