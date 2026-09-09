@@ -389,6 +389,7 @@ All workspace endpoints require a valid JWT Bearer token. A workspace is auto-cr
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/` | List `available` and `coming_soon` templates for the picker (auth required). |
+| `GET` | `/{templateId}/versions/{version}` | Default config + supported sections/themes for preview/apply (auth required). |
 
 **Template catalog item (`data[]`):**
 ```json
@@ -401,6 +402,18 @@ All workspace endpoints require a valid JWT Bearer token. A workspace is auto-cr
   "latestVersion": 1,
   "previewImageUrl": null,
   "supportedThemeIds": ["blue", "red", "ink", "forest", "teal", "stone"]
+}
+```
+
+**Template version (`GET /{templateId}/versions/{version}` — `data` field):**
+```json
+{
+  "templateId": "artisan-atelier",
+  "version": 1,
+  "defaultConfig": { "configVersion": 5, "themeId": "stone", "shopName": "Artisan Atelier", "...": "..." },
+  "supportedSections": ["hero", "featuredProducts", "features", "promoBanner", "faq", "contact", "contactCta"],
+  "supportedThemes": ["blue", "red", "ink", "forest", "teal", "stone"],
+  "configSchema": null
 }
 ```
 
