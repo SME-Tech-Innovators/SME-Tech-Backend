@@ -24,7 +24,7 @@ public class StorefrontTemplateSeedLoader {
     private final ObjectMapper objectMapper;
     private final ResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
 
-    List<StorefrontTemplateSeedDefinition> loadAll() {
+    public List<StorefrontTemplateSeedDefinition> loadAll() {
         List<StorefrontTemplateSeedDefinition> definitions = new ArrayList<>();
         try {
             Resource[] resources = resourceResolver.getResources(TEMPLATE_GLOB);
