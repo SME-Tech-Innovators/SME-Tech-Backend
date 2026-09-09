@@ -27,6 +27,7 @@ class StorefrontPublishValidationTest {
             "instagramGallery",
             "newsletter",
             "faq",
+            "contact",
             "contactCta"
     );
     private final List<String> themes = List.of(

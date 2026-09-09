@@ -1,0 +1,70 @@
+{
+  "id": "minimal-catalogue",
+  "name": "Minimal Catalogue",
+  "description": "Product-first layout for multi-category retail — clear prices, stock, and easy checkout.",
+  "vibe": "Clean catalogue",
+  "status": "AVAILABLE",
+  "latestVersion": 1,
+  "defaultConfig": {
+    "configVersion": 1,
+    "themeId": "blue",
+    "shopName": "My Store",
+    "tagline": "Clear prices. Easy online orders.",
+    "sections": [
+      {
+        "id": "hero-1",
+        "type": "hero",
+        "visible": true,
+        "content": {
+          "headline": "Browse the catalogue",
+          "subheadline": "Find what you need, check stock, and check out securely.",
+          "ctaText": "Shop now",
+          "ctaLink": "/products"
+        }
+      },
+      {
+        "id": "featured-1",
+        "type": "featuredProducts",
+        "visible": true,
+        "content": {
+          "title": "Popular products",
+          "products": []
+        }
+      },
+      {
+        "id": "categories-1",
+        "type": "shopByCategory",
+        "visible": true,
+        "content": {
+          "title": "Shop by category",
+          "categories": []
+        }
+      },
+      {
+        "id": "features-1",
+        "type": "features",
+        "visible": true,
+        "content": {
+          "title": "Why order with us",
+          "items": [
+            { "icon": "truck", "title": "Reliable shipping", "description": "Trackable delivery on every order" },
+            { "icon": "shield", "title": "Secure payment", "description": "Checkout protected with trusted payments" },
+            { "icon": "headset", "title": "Helpful support", "description": "Questions about stock or orders? We're here" }
+          ]
+        }
+      },
+      {
+        "id": "contact-1",
+        "type": "contactCta",
+        "visible": true,
+        "content": {
+          "headline": "Need help?",
+          "subheadline": "Contact us about products, stock, or your order",
+          "email": "",
+          "phone": ""
+        }
+      }
+    ],
+    "pages": []
+  }
+}

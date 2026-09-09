@@ -1,0 +1,69 @@
+{
+  "id": "classic-boutique",
+  "name": "Classic Boutique",
+  "description": "Editorial homepage with hero, products, promos, and value props.",
+  "vibe": "Editorial retail",
+  "status": "AVAILABLE",
+  "latestVersion": 1,
+  "defaultConfig": {
+    "configVersion": 1,
+    "themeId": "blue",
+    "shopName": "My Store",
+    "sections": [
+      {
+        "id": "hero-1",
+        "type": "hero",
+        "visible": true,
+        "content": {
+          "headline": "Welcome to Our Store",
+          "subheadline": "Discover our amazing collection",
+          "ctaText": "Shop Now",
+          "ctaLink": "/products"
+        }
+      },
+      {
+        "id": "featured-1",
+        "type": "featuredProducts",
+        "visible": true,
+        "content": {
+          "title": "Featured Products",
+          "products": []
+        }
+      },
+      {
+        "id": "promo-1",
+        "type": "promoBanner",
+        "visible": true,
+        "content": {
+          "message": "Free shipping on orders over R500!",
+          "backgroundColor": "#1d4ed8"
+        }
+      },
+      {
+        "id": "features-1",
+        "type": "features",
+        "visible": true,
+        "content": {
+          "title": "Why Shop With Us",
+          "items": [
+            { "icon": "truck", "title": "Fast Delivery", "description": "Get your order within 3-5 business days" },
+            { "icon": "shield", "title": "Secure Payment", "description": "Your payment information is always safe" },
+            { "icon": "refresh", "title": "Easy Returns", "description": "30-day hassle-free return policy" }
+          ]
+        }
+      },
+      {
+        "id": "contact-1",
+        "type": "contactCta",
+        "visible": true,
+        "content": {
+          "headline": "Get In Touch",
+          "subheadline": "We'd love to hear from you",
+          "email": "",
+          "phone": ""
+        }
+      }
+    ],
+    "pages": []
+  }
+}
