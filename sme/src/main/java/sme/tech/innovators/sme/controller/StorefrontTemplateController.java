@@ -6,10 +6,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import sme.tech.innovators.sme.dto.response.ApiResponse;
 import sme.tech.innovators.sme.dto.response.StorefrontTemplateDto;
+import sme.tech.innovators.sme.dto.response.StorefrontTemplateVersionDto;
 import sme.tech.innovators.sme.service.StorefrontTemplateService;
 
 import java.util.List;
@@ -28,5 +30,15 @@ public class StorefrontTemplateController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<StorefrontTemplateDto>>> listTemplates() {
         return ResponseEntity.ok(ApiResponse.success(storefrontTemplateService.listTemplates()));
+    }
+
+    @Operation(summary = "Get template version",
+            description = "Returns default config and supported sections/themes for a template version.")
+    @GetMapping("/{templateId}/versions/{version}")
+    public ResponseEntity<ApiResponse<StorefrontTemplateVersionDto>> getTemplateVersion(
+            @PathVariable String templateId,
+            @PathVariable int version) {
+        return ResponseEntity.ok(
+                ApiResponse.success(storefrontTemplateService.getTemplateVersion(templateId, version)));
     }
 }

@@ -389,6 +389,7 @@ All workspace endpoints require a valid JWT Bearer token. A workspace is auto-cr
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/` | List `available` and `coming_soon` templates for the picker (auth required). |
+| `GET` | `/{templateId}/versions/{version}` | Default config + supported sections/themes for preview/apply (auth required). |
 
 **Template catalog item (`data[]`):**
 ```json
@@ -404,9 +405,24 @@ All workspace endpoints require a valid JWT Bearer token. A workspace is auto-cr
 }
 ```
 
-Built-in templates (seeded on startup):
+**Template version (`GET /{templateId}/versions/{version}` — `data` field):**
+```json
+{
+  "templateId": "artisan-atelier",
+  "version": 1,
+  "defaultConfig": { "configVersion": 5, "themeId": "stone", "shopName": "Artisan Atelier", "...": "..." },
+  "supportedSections": ["hero", "featuredProducts", "features", "promoBanner", "faq", "contact", "contactCta"],
+  "supportedThemes": ["blue", "red", "ink", "forest", "teal", "stone"],
+  "configSchema": null
+}
+```
+
+Built-in templates (seeded on startup from `src/main/resources/storefront-templates/*.json`):
 - `classic-boutique` v1 — editorial retail (fashion / lifestyle bias)
 - `minimal-catalogue` v1 — product-first multi-category catalogue (`AVAILABLE`; Apply via `draft/reset`)
+- `artisan-atelier` v1 — handmade studio layout (ceramics, skincare, small-batch gifts; default theme `stone`)
+
+To add a template, drop a new JSON file in `storefront-templates/` and restart the backend. Each file needs `id`, `name`, `description`, `vibe`, `status`, `latestVersion`, and `defaultConfig`. Optional: `supportedThemes`, `supportedSections`, `previewImageUrl` (defaults apply when omitted).
 
 `POST …/storefront/draft/reset` with `{ "templateId": "minimal-catalogue", "templateVersion": 1 }` loads the neutral default seed (products/media unchanged). Published snapshots keep the previous `templateId` until re-publish.
 **`GET /` — response shape (`data` field):**
@@ -456,9 +472,8 @@ Built-in templates (seeded on startup):
 - Apply/reset/update requires template `status = AVAILABLE` (`coming_soon` is catalog-only).
 - The `templateVersion` must exist for that template.
 - The `config` sections must be a subset of the template version's `supportedSections`.
-- Built-in templates share `supportedSections`: `hero`, `featuredProducts`, `newArrivals`, `shopByCategory`, `sale`, `promoBanner`, `textImage`, `features`, `testimonials`, `instagramGallery`, `newsletter`, `faq`, `contactCta`.
-- Themes: `blue`, `red`, `ink`, `forest`, `teal`, `stone` for both
-  `classic-boutique` and `minimal-catalogue`.
+- Built-in templates share `supportedSections`: `hero`, `featuredProducts`, `newArrivals`, `shopByCategory`, `sale`, `promoBanner`, `textImage`, `features`, `testimonials`, `instagramGallery`, `newsletter`, `faq`, `contact`, `contactCta`.
+- Themes: `blue`, `red`, `ink`, `forest`, `teal`, `stone` for all built-in templates.
 
 ---
 

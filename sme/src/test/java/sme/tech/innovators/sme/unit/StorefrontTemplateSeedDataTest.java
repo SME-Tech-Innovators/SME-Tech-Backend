@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.DefaultApplicationArguments;
 import sme.tech.innovators.sme.config.StorefrontTemplateSeedData;
+import sme.tech.innovators.sme.config.StorefrontTemplateSeedLoader;
 import sme.tech.innovators.sme.entity.StorefrontTemplate;
 import sme.tech.innovators.sme.entity.StorefrontTemplateStatus;
 import sme.tech.innovators.sme.entity.StorefrontTemplateVersion;
@@ -34,8 +35,10 @@ class StorefrontTemplateSeedDataTest {
 
     @BeforeEach
     void setUp() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        StorefrontTemplateSeedLoader seedLoader = new StorefrontTemplateSeedLoader(objectMapper);
         seedData = new StorefrontTemplateSeedData(
-                templateRepository, templateVersionRepository, new ObjectMapper());
+                templateRepository, templateVersionRepository, seedLoader);
     }
 
     @Test
@@ -56,6 +59,14 @@ class StorefrontTemplateSeedDataTest {
                 .status(StorefrontTemplateStatus.COMING_SOON)
                 .latestVersion(1)
                 .build();
+        StorefrontTemplate artisan = StorefrontTemplate.builder()
+                .id("artisan-atelier")
+                .name("Artisan Atelier")
+                .description("old")
+                .vibe("Handmade studio")
+                .status(StorefrontTemplateStatus.AVAILABLE)
+                .latestVersion(1)
+                .build();
         StorefrontTemplateVersion classicVersion = StorefrontTemplateVersion.builder()
                 .template(classic)
                 .version(1)
@@ -70,13 +81,23 @@ class StorefrontTemplateSeedDataTest {
                 .supportedSections(List.of("hero"))
                 .defaultConfig(Map.of("configVersion", 1))
                 .build();
+        StorefrontTemplateVersion artisanVersion = StorefrontTemplateVersion.builder()
+                .template(artisan)
+                .version(1)
+                .supportedThemes(List.of("blue"))
+                .supportedSections(List.of("hero"))
+                .defaultConfig(Map.of("configVersion", 1))
+                .build();
 
         when(templateRepository.findById("classic-boutique")).thenReturn(Optional.of(classic));
         when(templateRepository.findById("minimal-catalogue")).thenReturn(Optional.of(minimal));
+        when(templateRepository.findById("artisan-atelier")).thenReturn(Optional.of(artisan));
         when(templateVersionRepository.findByTemplateIdAndVersion("classic-boutique", 1))
                 .thenReturn(Optional.of(classicVersion));
         when(templateVersionRepository.findByTemplateIdAndVersion("minimal-catalogue", 1))
                 .thenReturn(Optional.of(minimalVersion));
+        when(templateVersionRepository.findByTemplateIdAndVersion("artisan-atelier", 1))
+                .thenReturn(Optional.of(artisanVersion));
         when(templateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(templateVersionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 

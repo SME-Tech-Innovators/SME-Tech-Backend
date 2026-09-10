@@ -1,0 +1,264 @@
+{
+  "id": "artisan-atelier",
+  "name": "Artisan Atelier",
+  "description": "Warm editorial layout for handmade goods — ceramics, skincare, and small-batch gifts.",
+  "vibe": "Handmade studio",
+  "status": "AVAILABLE",
+  "latestVersion": 1,
+  "defaultConfig": {
+    "templateId": "artisan-atelier",
+    "themeId": "stone",
+    "configVersion": 5,
+    "shopName": "Artisan Atelier",
+    "tagline": "Handmade with care",
+    "navLinks": [
+      { "label": "Shop", "href": "@shop" },
+      { "label": "New", "href": "@shop/new" },
+      { "label": "About", "href": "@page:contact" },
+      { "label": "Contact", "href": "@page:contact" }
+    ],
+    "activeNavIndex": 0,
+    "heroBackgroundImageUrl": "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=2000&q=80",
+    "heroHeading": "Objects made slowly",
+    "heroSubheading": "Small-batch ceramics, natural skincare, and handmade gifts — crafted in limited runs.",
+    "heroPrimaryCta": { "label": "Browse the collection", "href": "@shop" },
+    "heroSecondaryCta": { "label": "Our story", "href": "@page:contact" },
+    "featuredTitle": "From the studio",
+    "featuredViewAll": { "label": "View all →", "href": "@shop" },
+    "products": [
+      {
+        "title": "Stoneware mug set",
+        "priceLabel": "R 320.00",
+        "imageUrl": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=800&q=80"
+      },
+      {
+        "title": "Botanical face oil",
+        "priceLabel": "R 245.00",
+        "imageUrl": "https://images.unsplash.com/photo-1556228578-0d95b1a5580f?auto=format&fit=crop&w=800&q=80"
+      },
+      {
+        "title": "Linen table runner",
+        "priceLabel": "R 410.00",
+        "imageUrl": "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=800&q=80"
+      }
+    ],
+    "promos": [
+      {
+        "title": "Studio favourites",
+        "description": "Pieces we keep coming back to — restocked in small batches.",
+        "buttonLabel": "Shop favourites",
+        "imageUrl": "https://images.unsplash.com/photo-1615529328331-f8917597711f?auto=format&fit=crop&w=1400&q=80",
+        "href": "@shop"
+      }
+    ],
+    "features": [
+      {
+        "title": "Small-batch only",
+        "description": "Limited runs — when it's gone, it's gone until the next firing.",
+        "icon": "sparkle"
+      },
+      {
+        "title": "Careful packaging",
+        "description": "Fragile pieces wrapped with care for safe delivery.",
+        "icon": "truck"
+      },
+      {
+        "title": "Secure checkout",
+        "description": "Pay online with confidence — encrypted card payments.",
+        "icon": "check"
+      }
+    ],
+    "sections": [
+      {
+        "id": "home-hero",
+        "type": "hero",
+        "imageUrl": "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=2000&q=80",
+        "heading": "Objects made slowly",
+        "subheading": "Small-batch ceramics, natural skincare, and handmade gifts — crafted in limited runs.",
+        "primaryCta": { "label": "Browse the collection", "href": "@shop" },
+        "secondaryCta": { "label": "Our story", "href": "@page:contact" }
+      },
+      {
+        "id": "home-values",
+        "type": "features",
+        "title": "Why shop with us",
+        "items": [
+          {
+            "title": "Small-batch only",
+            "description": "Limited runs — when it's gone, it's gone until the next firing.",
+            "icon": "sparkle"
+          },
+          {
+            "title": "Careful packaging",
+            "description": "Fragile pieces wrapped with care for safe delivery.",
+            "icon": "truck"
+          },
+          {
+            "title": "Secure checkout",
+            "description": "Pay online with confidence — encrypted card payments.",
+            "icon": "check"
+          }
+        ]
+      },
+      {
+        "id": "home-featured-products",
+        "type": "featuredProducts",
+        "title": "From the studio",
+        "viewAll": { "label": "View all →", "href": "@shop" },
+        "limit": 4,
+        "products": [
+          {
+            "title": "Stoneware mug set",
+            "priceLabel": "R 320.00",
+            "imageUrl": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=800&q=80"
+          },
+          {
+            "title": "Botanical face oil",
+            "priceLabel": "R 245.00",
+            "imageUrl": "https://images.unsplash.com/photo-1556228578-0d95b1a5580f?auto=format&fit=crop&w=800&q=80"
+          },
+          {
+            "title": "Linen table runner",
+            "priceLabel": "R 410.00",
+            "imageUrl": "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=800&q=80"
+          }
+        ]
+      },
+      {
+        "id": "home-promo-studio",
+        "type": "promoBanner",
+        "title": "Studio favourites",
+        "description": "Pieces we keep coming back to — restocked in small batches.",
+        "buttonLabel": "Shop favourites",
+        "imageUrl": "https://images.unsplash.com/photo-1615529328331-f8917597711f?auto=format&fit=crop&w=1400&q=80",
+        "href": "@shop"
+      },
+      {
+        "id": "home-contact",
+        "type": "contactCta",
+        "title": "Questions about a piece?",
+        "body": "Message us about sizing, materials, or custom orders — we reply personally.",
+        "buttonLabel": "Get in touch",
+        "href": "@page:contact"
+      }
+    ],
+    "pages": [
+      {
+        "id": "page-contact",
+        "title": "Contact",
+        "slug": "contact",
+        "sections": [
+          {
+            "id": "contact-hero",
+            "type": "hero",
+            "imageUrl": "https://images.unsplash.com/photo-1615529328331-f8917597711f?auto=format&fit=crop&w=1200&q=80",
+            "heading": "We're here to help",
+            "subheading": "Orders, custom requests, or care instructions — reach out and we'll reply soon.",
+            "primaryCta": { "label": "Browse collection", "href": "@shop" },
+            "secondaryCta": null
+          },
+          {
+            "id": "contact-main",
+            "type": "contact",
+            "eyebrow": "Contact",
+            "title": "Get in touch",
+            "body": "WhatsApp is fastest for quick questions. For custom orders, leave a message and we'll follow up.",
+            "email": "hello@example.com",
+            "hours": "Mon–Sat, 9:00–16:00",
+            "note": "Usually replies within a few hours.",
+            "whatsappLabel": "Chat on WhatsApp",
+            "whatsappHref": "",
+            "formTitle": "Send a message",
+            "submitLabel": "Send message",
+            "successMessage": "Thanks — we have your message and will reply soon."
+          },
+          {
+            "id": "contact-faq",
+            "type": "faq",
+            "title": "Before you write",
+            "items": [
+              {
+                "question": "Are pieces dishwasher-safe?",
+                "answer": "Most stoneware is dishwasher-safe unless noted on the product page. Hand wash glazed art pieces."
+              },
+              {
+                "question": "Do you take custom orders?",
+                "answer": "Yes — message us with your idea and timeline. Custom work depends on studio schedule."
+              },
+              {
+                "question": "How is fragile pottery shipped?",
+                "answer": "Each piece is wrapped individually with protective padding. We use trusted couriers for delivery."
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "collectionPages": {
+      "shop": {
+        "eyebrow": "Shop",
+        "title": "All products",
+        "description": "Browse handmade pieces from the studio — ceramics, skincare, and home goods.",
+        "imageUrl": "https://images.unsplash.com/photo-1615529328331-f8917597711f?auto=format&fit=crop&w=1400&q=80",
+        "chrome": {
+          "showSearch": true,
+          "showCollectionTabs": true,
+          "showCategoryFilters": true,
+          "tabAll": true,
+          "tabNew": true,
+          "tabSale": true
+        }
+      },
+      "new": {
+        "eyebrow": "Just in",
+        "title": "New from the studio",
+        "description": "Fresh pieces from the latest batch.",
+        "imageUrl": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=1200&q=80",
+        "chrome": {
+          "showSearch": true,
+          "showCollectionTabs": true,
+          "showCategoryFilters": true,
+          "tabAll": true,
+          "tabNew": true,
+          "tabSale": true
+        }
+      },
+      "sale": {
+        "eyebrow": "Sale",
+        "title": "Studio sale",
+        "description": "End-of-batch pieces and seasonal offers.",
+        "imageUrl": "https://images.unsplash.com/photo-1556228578-0d95b1a5580f?auto=format&fit=crop&w=1400&q=80",
+        "chrome": {
+          "showSearch": true,
+          "showCollectionTabs": true,
+          "showCategoryFilters": true,
+          "tabAll": true,
+          "tabNew": true,
+          "tabSale": true
+        }
+      }
+    },
+    "footerBlurb": "Handmade goods from a small studio — thoughtful materials, limited batches, and personal support.",
+    "footerShopLinks": [
+      { "label": "Shop all", "href": "@shop" },
+      { "label": "New arrivals", "href": "@shop/new" },
+      { "label": "Sale", "href": "@shop/sale" },
+      { "label": "Contact", "href": "@page:contact" }
+    ],
+    "footerPolicyLinks": [
+      { "label": "Privacy policy", "href": "/privacy" },
+      { "label": "Terms of service", "href": "/terms" },
+      { "label": "Shipping info", "href": "#" },
+      { "label": "Returns", "href": "#" }
+    ],
+    "footerConnectLinks": [
+      { "label": "Contact us", "href": "@page:contact" },
+      { "label": "Instagram", "href": "#" },
+      { "label": "Studio journal", "href": "#" }
+    ],
+    "copyrightLine": "© 2026 SME Operations. All rights reserved.",
+    "cartCountLabel": "0",
+    "whatsappNumber": "+27 00 000 0000",
+    "accentColor": "#78716c"
+  }
+}
