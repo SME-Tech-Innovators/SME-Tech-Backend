@@ -148,4 +148,17 @@ class MerchantOrderServiceTest {
         assertThat(MerchantOrderService.isAllowedTransition(OrderStatus.PAID, OrderStatus.FULFILLED)).isFalse();
         assertThat(MerchantOrderService.isAllowedTransition(OrderStatus.FULFILLED, OrderStatus.CANCELLED)).isFalse();
     }
+
+    @Test
+    void bobGoOrdersRejectAllManualFulfilmentChanges() {
+        order.setShippingProvider("bobgo");
+        when(orderRepository.findByIdAndWorkspaceId(order.getId(), workspaceId)).thenReturn(Optional.of(order));
+        for (String status : new String[]{"processing", "fulfilled", "cancelled"}) {
+            assertThatThrownBy(() -> service.updateOrderStatus(workspaceId, userId, order.getId(), status))
+                    .isInstanceOf(InvalidOrderStatusTransitionException.class)
+                    .hasMessageContaining("Bob Go manages fulfilment");
+        }
+        verify(orderRepository, never()).save(any());
+        verifyNoInteractions(inventoryService);
+    }
 }

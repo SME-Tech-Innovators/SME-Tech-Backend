@@ -15,6 +15,7 @@ public class OrderConfirmationDto {
     private String workspaceId;
     private String cartId;
     private String orderNumber;
+    private String cancellationRequestStatus;
     private String customerName;
     private String customerEmail;
     private String customerPhone;

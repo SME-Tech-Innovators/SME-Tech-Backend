@@ -114,6 +114,17 @@ public class PaystackClient {
         }
     }
 
+    public Map<String, Object> createRefund(String reference, int amount, String currency, String reason) {
+        return post("/refund", Map.of("transaction", reference, "amount", amount,
+                "currency", currency, "merchant_note", reason), false);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> fetchRefund(String id) {
+        return requireSuccess(paystackRestClient.get().uri("/refund/{id}", id)
+                .retrieve().body(Map.class), false);
+    }
+
     public String getPublicKey() {
         return paystackConfig.getPublicKey();
     }

@@ -8,17 +8,24 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sme.tech.innovators.sme.dto.request.AddCartItemRequest;
 import sme.tech.innovators.sme.dto.request.CheckoutRequest;
+import sme.tech.innovators.sme.dto.request.ShippingQuoteRequest;
 import sme.tech.innovators.sme.dto.request.InitializePaymentRequest;
 import sme.tech.innovators.sme.dto.request.OrderLookupRequest;
 import sme.tech.innovators.sme.dto.request.UpdateCartItemRequest;
 import sme.tech.innovators.sme.dto.response.ApiResponse;
 import sme.tech.innovators.sme.dto.response.CartDto;
 import sme.tech.innovators.sme.dto.response.OrderConfirmationDto;
+import sme.tech.innovators.sme.dto.response.OrderShippingStatusDto;
 import sme.tech.innovators.sme.dto.response.PaymentInitDto;
+import sme.tech.innovators.sme.dto.response.ShippingQuoteDto;
 import sme.tech.innovators.sme.service.CartService;
 import sme.tech.innovators.sme.service.CheckoutService;
 import sme.tech.innovators.sme.service.PaymentService;
+import sme.tech.innovators.sme.service.OrderShippingService;
 import sme.tech.innovators.sme.service.RateLimitService;
+import sme.tech.innovators.sme.service.ShippingQuoteService;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/public/storefronts/{storeSlug}")
@@ -29,6 +36,8 @@ public class PublicCartController {
     private final CheckoutService checkoutService;
     private final PaymentService paymentService;
     private final RateLimitService rateLimitService;
+    private final ShippingQuoteService shippingQuoteService;
+    private final OrderShippingService orderShippingService;
 
     // ── Cart endpoints ─────────────────────────────────────────────────────
 
@@ -72,6 +81,15 @@ public class PublicCartController {
             @PathVariable String itemId) {
         CartDto cart = cartService.removeItem(storeSlug, cartId, itemId);
         return ResponseEntity.ok(ApiResponse.success(cart));
+    }
+
+    // ── Shipping quote ───────────────────────────────────────────────────
+
+    @PostMapping("/shipping/quote")
+    public ResponseEntity<ApiResponse<ShippingQuoteDto>> shippingQuote(
+            @PathVariable String storeSlug,
+            @Valid @RequestBody ShippingQuoteRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(shippingQuoteService.quote(storeSlug, request)));
     }
 
     // ── Checkout endpoints ─────────────────────────────────────────────────
@@ -121,6 +139,14 @@ public class PublicCartController {
             @PathVariable String orderId) {
         OrderConfirmationDto confirmation = checkoutService.getOrderConfirmation(storeSlug, orderId);
         return ResponseEntity.ok(ApiResponse.success(confirmation));
+    }
+
+    @GetMapping("/orders/{orderId}/shipping")
+    public ResponseEntity<ApiResponse<OrderShippingStatusDto>> getOrderShipping(
+            @PathVariable String storeSlug,
+            @PathVariable UUID orderId) {
+        return ResponseEntity.ok(ApiResponse.success(
+                orderShippingService.getPublicShipping(storeSlug, orderId)));
     }
 
     private static String clientIp(HttpServletRequest request) {

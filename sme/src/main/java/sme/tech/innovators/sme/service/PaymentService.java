@@ -37,6 +37,7 @@ public class PaymentService {
     private final OrderConfirmationMailer orderConfirmationMailer;
     private final CheckoutService checkoutService;
     private final InventoryService inventoryService;
+    private final BobGoShipmentService bobGoShipmentService;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -138,6 +139,10 @@ public class PaymentService {
         Workspace workspace = publicStoreResolver.requireLiveWorkspace(storeSlug);
         Order order = loadOrderForStore(workspace, orderId);
 
+        if (order.getPaymentStatus() == PaymentStatus.REFUNDED) {
+            return checkoutService.toConfirmationDto(order);
+        }
+
         if (order.getPaymentStatus() == PaymentStatus.PAID
                 && order.getStatus() == OrderStatus.PAID) {
             // Webhook (often hitting another host) may have marked paid before stock ran.
@@ -159,6 +164,9 @@ public class PaymentService {
             return checkoutService.toConfirmationDto(order);
         }
 
+        if (payment.getStatus() == PaymentRecordStatus.PAID) {
+            return checkoutService.toConfirmationDto(order);
+        }
         applyPaid(payment, order, Map.of("event", "transaction.verify", "data", data));
         return checkoutService.toConfirmationDto(
                 orderRepository.findByIdWithItemsAndProducts(order.getId()).orElse(order));
@@ -195,6 +203,9 @@ public class PaymentService {
                 .orElseThrow(() -> new PaymentWebhookInvalidException(
                         "Unknown payment reference: " + reference));
 
+        if (payment.getOrder().getPaymentStatus() == PaymentStatus.REFUNDED) {
+            return;
+        }
         if (payment.getStatus() == PaymentRecordStatus.PAID) {
             log.info("Idempotent webhook for already-paid reference={}", reference);
             ensureStockDecremented(payment.getOrder().getId());
@@ -245,6 +256,7 @@ public class PaymentService {
         log.info("Marked order={} paid via Paystack reference={}",
                 orderWithItems.getId(), payment.getProviderReference());
         orderConfirmationMailer.scheduleAfterPayment(orderWithItems.getId());
+        bobGoShipmentService.createShipmentIfNeeded(orderWithItems.getId());
     }
 
     String resolveCallbackUrl(String requested, String storeSlug, String orderId) {
