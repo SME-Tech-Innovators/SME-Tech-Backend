@@ -19,6 +19,20 @@ public class CheckoutRequest {
     @NotNull(message = "shippingAddress is required")
     private ShippingAddress shippingAddress;
 
+    @Valid
+    private ShippingSelection shippingSelection;
+
+    @Data
+    public static class ShippingSelection {
+        @NotBlank(message = "shipping optionId is required when shipping is enabled")
+        private String optionId;
+        private String provider;
+        /** Minor units (cents) — validated server-side. */
+        private Integer amount;
+        private String currency;
+        private String bobgoRateToken;
+    }
+
     @Data
     public static class CustomerInfo {
         @NotBlank(message = "customer name is required")

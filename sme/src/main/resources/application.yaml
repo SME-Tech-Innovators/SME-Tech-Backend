@@ -84,6 +84,12 @@ app:
     base-url: ${PAYSTACK_BASE_URL:https://api.paystack.co}
     platform-fee-percent: ${PAYSTACK_PLATFORM_FEE_PERCENT:0}
 
+  bobgo:
+    base-url: ${BOBGO_API_BASE_URL:https://api.sandbox.bobgo.co.za/v2/}
+    bearer-token: ${BOBGO_BEARER_TOKEN:}
+    sandbox: ${BOBGO_USE_SANDBOX:true}
+    webhook-secret: ${BOBGO_WEBHOOK_SECRET:}
+
 springdoc:
   api-docs:
     path: /v3/api-docs
@@ -146,3 +152,8 @@ app:
     webhook-secret: whsec_test_dummy
     base-url: https://api.paystack.co
     platform-fee-percent: 0
+  bobgo:
+    base-url: https://api.sandbox.bobgo.co.za/v2/
+    bearer-token: test-bobgo-token
+    sandbox: true
+    webhook-secret: test-bobgo-webhook-secret

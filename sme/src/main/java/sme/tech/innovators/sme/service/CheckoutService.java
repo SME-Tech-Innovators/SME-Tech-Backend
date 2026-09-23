@@ -34,6 +34,7 @@ public class CheckoutService {
     private final CartRepository cartRepository;
     private final OrderRepository orderRepository;
     private final PublicStoreResolver publicStoreResolver;
+    private final ShippingCheckoutValidator shippingCheckoutValidator;
 
     @Transactional
     public OrderConfirmationDto checkout(String storeSlug, CheckoutRequest request) {
@@ -84,7 +85,10 @@ public class CheckoutService {
         BigDecimal subtotal = orderItems.stream()
                 .map(OrderItem::getTotalAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal shippingAmount = BigDecimal.ZERO;
+
+        ShippingCheckoutValidator.ValidatedShipping shipping =
+                shippingCheckoutValidator.validate(workspace.getId(), cart, request);
+        BigDecimal shippingAmount = shipping.shippingAmountMajor();
         BigDecimal total = subtotal.add(shippingAmount);
 
         Order order = Order.builder()
@@ -95,6 +99,9 @@ public class CheckoutService {
                 .customerEmail(request.getCustomer().getEmail())
                 .customerPhone(request.getCustomer().getPhone())
                 .shippingAddress(buildAddressMap(request.getShippingAddress()))
+                .shippingMethod(shipping.shippingMethod())
+                .shippingProvider(shipping.shippingProvider())
+                .shippingSelection(shipping.selectionSnapshot())
                 .subtotalAmount(subtotal)
                 .shippingAmount(shippingAmount)
                 .totalAmount(total)
@@ -195,6 +202,8 @@ public class CheckoutService {
                 .workspaceId(order.getWorkspace().getId().toString())
                 .cartId(order.getCart() != null ? order.getCart().getId().toString() : null)
                 .orderNumber(order.getOrderNumber())
+                .cancellationRequestStatus(order.getCancellationRequestStatus() == null ? null
+                        : order.getCancellationRequestStatus().toLowerCase(java.util.Locale.ROOT))
                 .customerName(order.getCustomerName())
                 .customerEmail(order.getCustomerEmail())
                 .customerPhone(order.getCustomerPhone())
