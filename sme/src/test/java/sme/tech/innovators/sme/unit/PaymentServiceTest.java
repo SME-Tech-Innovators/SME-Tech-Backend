@@ -44,6 +44,7 @@ class PaymentServiceTest {
     @Mock OrderConfirmationMailer orderConfirmationMailer;
     @Mock CheckoutService checkoutService;
     @Mock InventoryService inventoryService;
+    @Mock sme.tech.innovators.sme.service.BobGoShipmentService bobGoShipmentService;
 
     private PaymentService paymentService;
     private Workspace workspace;
@@ -59,7 +60,8 @@ class PaymentServiceTest {
                 new ObjectMapper(),
                 orderConfirmationMailer,
                 checkoutService,
-                inventoryService);
+                inventoryService,
+                bobGoShipmentService);
         ReflectionTestUtils.setField(paymentService, "frontendUrl", "https://sme-operations.netlify.app");
         workspace = Workspace.builder()
                 .id(UUID.randomUUID())
@@ -86,6 +88,17 @@ class PaymentServiceTest {
         lenient().when(publicStoreResolver.requireLiveWorkspace("bridge-labs")).thenReturn(workspace);
         lenient().when(paystackClient.getPublicKey()).thenReturn("pk_test_dummy");
         lenient().when(paystackClient.getWebhookSecret()).thenReturn("whsec_test");
+    }
+
+    @Test
+    void refundedOrderIsNotMarkedPaidAgainByVerification() {
+        order.setPaymentStatus(PaymentStatus.REFUNDED);
+        order.setStatus(OrderStatus.FULFILLED);
+        when(orderRepository.findByIdAndWorkspaceId(order.getId(), workspace.getId())).thenReturn(Optional.of(order));
+        paymentService.verifyPayment("bridge-labs", order.getId().toString());
+        verifyNoInteractions(paymentRepository, inventoryService, bobGoShipmentService);
+        verify(paystackClient, never()).verifyTransaction(anyString());
+        assertThat(order.getPaymentStatus()).isEqualTo(PaymentStatus.REFUNDED);
     }
 
     @Test

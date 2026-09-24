@@ -33,6 +33,20 @@ public class EmailService {
     private String senderName;
 
     @Async("emailTaskExecutor")
+    public void sendOrderAccessEmail(String toEmail, String storeSlug, UUID orderId, String token) {
+        String link = normalizeFrontendUrl() + "/s/"
+                + java.net.URLEncoder.encode(storeSlug, java.nio.charset.StandardCharsets.UTF_8)
+                + "/orders/track?orderId=" + orderId + "#access=" + token;
+        String text = "View your order and request a cancellation using this secure link:\n\n"
+                + link + "\n\nThis link expires in 24 hours. Keep it private."
+                + "\nIf you did not request this email, you can ignore it.";
+        sendWithRetry(toEmail, "View and manage your order", text,
+                "<p>View your order and request a cancellation.</p><p><a href=\"" + link
+                        + "\">Manage my order</a></p><p>This private link expires in 24 hours.</p>"
+                        + "<p>If you did not request this email, you can ignore it.</p>", "ORDER_ACCESS_EMAIL");
+    }
+
+    @Async("emailTaskExecutor")
     public void sendVerificationEmail(String toEmail, String fullName, String token) {
         String normalizedFrontendUrl = normalizeFrontendUrl();
         String verificationLink = normalizedFrontendUrl + "/verify?token=" + token;

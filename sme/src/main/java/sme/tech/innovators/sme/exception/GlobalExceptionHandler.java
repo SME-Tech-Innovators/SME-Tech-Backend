@@ -347,6 +347,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ErrorCodes.PAYMENT_WEBHOOK_INVALID, ex.getMessage()));
     }
 
+    @ExceptionHandler(BobGoWebhookInvalidException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBobGoWebhookInvalid(BobGoWebhookInvalidException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error(ErrorCodes.PAYMENT_WEBHOOK_INVALID, ex.getMessage()));
+    }
+
     @ExceptionHandler(PaystackSubaccountFailedException.class)
     public ResponseEntity<ApiResponse<Void>> handlePaystackSubaccountFailed(PaystackSubaccountFailedException ex) {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
@@ -357,6 +363,36 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleInvalidBankAccount(InvalidBankAccountException ex) {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(ApiResponse.error(ErrorCodes.INVALID_BANK_ACCOUNT, ex.getMessage()));
+    }
+
+    @ExceptionHandler(ShippingNotConfiguredException.class)
+    public ResponseEntity<ApiResponse<Void>> handleShippingNotConfigured(ShippingNotConfiguredException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ApiResponse.error(ErrorCodes.SHIPPING_NOT_CONFIGURED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(ShippingQuoteFailedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleShippingQuoteFailed(ShippingQuoteFailedException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(ApiResponse.error(ErrorCodes.SHIPPING_QUOTE_FAILED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(ShippingInvalidSelectionException.class)
+    public ResponseEntity<ApiResponse<Void>> handleShippingInvalidSelection(ShippingInvalidSelectionException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ErrorCodes.SHIPPING_INVALID_SELECTION, ex.getMessage()));
+    }
+
+    @ExceptionHandler(ShipmentAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleShipmentAlreadyExists(ShipmentAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(ErrorCodes.SHIPMENT_ALREADY_EXISTS, ex.getMessage()));
+    }
+
+    @ExceptionHandler(ShipmentCreateFailedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleShipmentCreateFailed(ShipmentCreateFailedException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(ApiResponse.error(ErrorCodes.SHIPMENT_CREATE_FAILED, ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

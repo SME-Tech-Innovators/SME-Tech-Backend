@@ -55,6 +55,10 @@ public class MerchantOrderService {
         Order order = orderRepository.findByIdAndWorkspaceId(orderId, workspaceId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found: " + orderId));
 
+        if ("bobgo".equalsIgnoreCase(order.getShippingProvider())) {
+            throw new InvalidOrderStatusTransitionException(
+                    "Bob Go manages fulfilment. Use the shipment cancellation endpoint.");
+        }
         OrderStatus target = parseMerchantStatus(statusRaw);
         OrderStatus current = order.getStatus();
         if (!isAllowedTransition(current, target)) {

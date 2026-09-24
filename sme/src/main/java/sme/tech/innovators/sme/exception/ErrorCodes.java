@@ -76,4 +76,11 @@ public final class ErrorCodes {
     public static final String PUBLIC_STOREFRONT_NOT_PUBLISHED = "PUBLIC_STOREFRONT_NOT_PUBLISHED";
     public static final String PUBLIC_PRODUCT_NOT_FOUND = "PUBLIC_PRODUCT_NOT_FOUND";
     public static final String PUBLIC_PAGE_NOT_FOUND = "PUBLIC_PAGE_NOT_FOUND";
+
+    // Bob Go shipping
+    public static final String SHIPPING_NOT_CONFIGURED = "SHIPPING_NOT_CONFIGURED";
+    public static final String SHIPPING_QUOTE_FAILED = "SHIPPING_QUOTE_FAILED";
+    public static final String SHIPPING_INVALID_SELECTION = "SHIPPING_INVALID_SELECTION";
+    public static final String SHIPMENT_ALREADY_EXISTS = "SHIPMENT_ALREADY_EXISTS";
+    public static final String SHIPMENT_CREATE_FAILED = "SHIPMENT_CREATE_FAILED";
 }

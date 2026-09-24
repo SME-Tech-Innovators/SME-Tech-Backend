@@ -11,6 +11,10 @@ import java.util.UUID;
 
 public interface OrderRepository extends JpaRepository<Order, UUID> {
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT o FROM Order o WHERE o.id = :id AND o.workspace.id = :workspaceId")
+    Optional<Order> lockForReturn(@Param("id") UUID id, @Param("workspaceId") UUID workspaceId);
+
     Optional<Order> findByIdAndWorkspaceId(UUID id, UUID workspaceId);
 
     List<Order> findAllByWorkspace_IdOrderByCreatedAtDesc(UUID workspaceId);
@@ -32,6 +36,7 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     /** Eager lines + products for stock decrement after payment. */
     @Query("""
             SELECT DISTINCT o FROM Order o
+            LEFT JOIN FETCH o.workspace
             LEFT JOIN FETCH o.items i
             LEFT JOIN FETCH i.product
             WHERE o.id = :id

@@ -36,13 +36,17 @@ class CheckoutServiceTest {
     @Mock CartRepository cartRepository;
     @Mock OrderRepository orderRepository;
     @Mock PublicStoreResolver publicStoreResolver;
+    @Mock sme.tech.innovators.sme.service.ShippingCheckoutValidator shippingCheckoutValidator;
 
     private CheckoutService checkoutService;
     private Workspace workspace;
 
     @BeforeEach
     void setUp() {
-        checkoutService = new CheckoutService(cartRepository, orderRepository, publicStoreResolver);
+        checkoutService = new CheckoutService(
+                cartRepository, orderRepository, publicStoreResolver, shippingCheckoutValidator);
+        lenient().when(shippingCheckoutValidator.validate(any(), any(), any()))
+                .thenReturn(sme.tech.innovators.sme.service.ShippingCheckoutValidator.ValidatedShipping.free());
         workspace = Workspace.builder()
                 .id(UUID.randomUUID())
                 .name("Bridge Labs")

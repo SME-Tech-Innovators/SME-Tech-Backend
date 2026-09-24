@@ -48,6 +48,16 @@ public class Order {
     @Column(name = "shipping_address")
     private Map<String, Object> shippingAddress;
 
+    @Column(name = "shipping_method", length = 100)
+    private String shippingMethod;
+
+    @Column(name = "shipping_provider", length = 50)
+    private String shippingProvider;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "shipping_selection")
+    private Map<String, Object> shippingSelection;
+
     @Column(name = "subtotal_amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal subtotalAmount;
 
@@ -71,6 +81,20 @@ public class Order {
     @Builder.Default
     @Column(name = "payment_status", nullable = false, length = 20)
     private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
+
+    @Column(length = 64)
+    private String customerAccessTokenHash;
+    private LocalDateTime customerAccessExpiresAt;
+    private LocalDateTime customerAccessSentAt;
+
+    @Column(length = 20)
+    private String cancellationRequestStatus;
+    @Column(length = 500)
+    private String cancellationRequestReason;
+    @Column(length = 500)
+    private String cancellationReviewNote;
+    private LocalDateTime cancellationRequestedAt;
+    private LocalDateTime cancellationReviewedAt;
 
     /** Claim flag so confirmation email is sent at most once per order. */
     @Column(name = "confirmation_email_sent", nullable = false)
