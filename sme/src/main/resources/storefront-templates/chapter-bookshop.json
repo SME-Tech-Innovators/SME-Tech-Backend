@@ -1,0 +1,173 @@
+{
+  "id": "chapter-bookshop",
+  "name": "Chapter Bookshop",
+  "description": "A welcoming independent bookshop with illustrated shelves, portrait book covers, genre collections and space for reading stories.",
+  "vibe": "Books / paper & ink",
+  "status": "AVAILABLE",
+  "latestVersion": 1,
+  "previewImageUrl": "https://sme-operations-media.s3.us-east-1.amazonaws.com/workspaces/37cfd32e-e94d-403e-be16-9a61757d826c/media/f9a2ba4e-47cc-4db4-bcdb-44a3fca8b877/reading-room.png",
+  "supportedThemes": [
+    "blue",
+    "red",
+    "ink",
+    "forest",
+    "teal",
+    "stone"
+  ],
+  "supportedSections": [
+    "hero",
+    "featuredProducts",
+    "promoBanner",
+    "textImage",
+    "features",
+    "newArrivals",
+    "sale",
+    "shopByCategory",
+    "testimonials",
+    "instagramGallery",
+    "newsletter",
+    "faq",
+    "contact",
+    "contactCta"
+  ],
+  "defaultConfig": {
+    "configVersion": 6,
+    "templateId": "chapter-bookshop",
+    "themeId": "stone",
+    "accentColor": "#304D40",
+    "fontPairId": "inter-playfair",
+    "shopName": "Chapter Bookshop",
+    "tagline": "For the love of a good book.",
+    "navLinks": [
+      {
+        "label": "All books",
+        "href": "@shop"
+      },
+      {
+        "label": "New on the shelf",
+        "href": "@shop/new"
+      },
+      {
+        "label": "Our story",
+        "href": "@page:about"
+      }
+    ],
+    "sections": [
+      {
+        "id": "chapter-hero",
+        "type": "hero",
+        "heading": "Your next chapter\nstarts here.",
+        "subheading": "For the curious, the dreamers and the just-one-more-page readers. Find a story to get lost in.",
+        "imageUrl": "https://sme-operations-media.s3.us-east-1.amazonaws.com/workspaces/37cfd32e-e94d-403e-be16-9a61757d826c/media/f9a2ba4e-47cc-4db4-bcdb-44a3fca8b877/reading-room.png",
+        "primaryCta": {
+          "label": "Browse the shelves",
+          "href": "@shop"
+        },
+        "secondaryCta": {
+          "label": "Meet the bookshop",
+          "href": "@page:about"
+        }
+      },
+      {
+        "id": "chapter-genres",
+        "type": "shopByCategory",
+        "title": "Find your kind of story",
+        "viewAll": {
+          "label": "All books",
+          "href": "@shop"
+        },
+        "categories": []
+      },
+      {
+        "id": "chapter-shelf",
+        "type": "featuredProducts",
+        "title": "On the bookshelf",
+        "viewAll": {
+          "label": "Browse all books",
+          "href": "@shop"
+        },
+        "limit": 8
+      },
+      {
+        "id": "chapter-story",
+        "type": "textImage",
+        "eyebrow": "Between the covers",
+        "title": "A little space for big stories.",
+        "body": "Old favourites. Unexpected discoveries. Stories that stay with you. Explore our shelves at your own pace and find your next read.",
+        "imageUrl": "https://sme-operations-media.s3.us-east-1.amazonaws.com/workspaces/37cfd32e-e94d-403e-be16-9a61757d826c/media/f9a2ba4e-47cc-4db4-bcdb-44a3fca8b877/reading-room.png",
+        "imagePosition": "left",
+        "cta": {
+          "label": "Explore the collection",
+          "href": "@shop"
+        }
+      },
+      {
+        "id": "chapter-banner",
+        "type": "promoBanner",
+        "title": "There’s always room for one more book.",
+        "description": "Build a reading list that takes you somewhere new.",
+        "buttonLabel": "Find your next read",
+        "href": "@shop",
+        "imageUrl": "https://sme-operations-media.s3.us-east-1.amazonaws.com/workspaces/37cfd32e-e94d-403e-be16-9a61757d826c/media/f9a2ba4e-47cc-4db4-bcdb-44a3fca8b877/reading-room.png"
+      },
+      {
+        "id": "chapter-features",
+        "type": "features",
+        "title": "Make yourself at home.",
+        "items": [
+          {
+            "icon": "sparkle",
+            "title": "Explore the shelves",
+            "description": "Browse by genre and find a story that speaks to you."
+          },
+          {
+            "icon": "check",
+            "title": "Take a closer look",
+            "description": "Read about each book before adding it to your basket."
+          },
+          {
+            "icon": "truck",
+            "title": "Follow your order",
+            "description": "Find your purchase again through Manage order."
+          }
+        ]
+      }
+    ],
+    "footerBlurb": "A home for stories, ideas and your next favourite read.",
+    "footerShopLinks": [
+      {
+        "label": "Browse all books",
+        "href": "@shop"
+      },
+      {
+        "label": "Our story",
+        "href": "@page:about"
+      }
+    ],
+    "footerPolicyLinks": [],
+    "footerConnectLinks": [],
+    "copyrightLine": "© Chapter Bookshop. All rights reserved.",
+    "pages": [
+      {
+        "id": "about",
+        "slug": "about",
+        "title": "Our story",
+        "sections": [
+          {
+            "id": "chapter-about",
+            "type": "textImage",
+            "eyebrow": "Between the covers",
+            "title": "A little space for big stories.",
+            "body": "Old favourites. Unexpected discoveries. Stories that stay with you. Explore our shelves at your own pace and find your next read.",
+            "imageUrl": "https://sme-operations-media.s3.us-east-1.amazonaws.com/workspaces/37cfd32e-e94d-403e-be16-9a61757d826c/media/f9a2ba4e-47cc-4db4-bcdb-44a3fca8b877/reading-room.png",
+            "imagePosition": "left",
+            "cta": {
+              "label": "Explore the collection",
+              "href": "@shop"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
