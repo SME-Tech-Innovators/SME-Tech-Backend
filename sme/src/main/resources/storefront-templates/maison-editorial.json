@@ -1,0 +1,202 @@
+{
+  "id": "maison-editorial",
+  "name": "Maison Editorial",
+  "description": "A fashion magazine for your brand: expressive typography, asymmetric photography and a curated product edit. Customise the cover, spacing, images, colours and type.",
+  "vibe": "Fashion / quiet luxury",
+  "status": "AVAILABLE",
+  "latestVersion": 1,
+  "previewImageUrl": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1600&q=85",
+  "supportedThemes": [
+    "blue",
+    "red",
+    "ink",
+    "forest",
+    "teal",
+    "stone"
+  ],
+  "supportedSections": [
+    "hero",
+    "featuredProducts",
+    "promoBanner",
+    "textImage",
+    "features",
+    "newArrivals",
+    "sale",
+    "shopByCategory",
+    "testimonials",
+    "instagramGallery",
+    "newsletter",
+    "faq",
+    "contact",
+    "contactCta"
+  ],
+  "defaultConfig": {
+    "configVersion": 6,
+    "templateId": "maison-editorial",
+    "themeId": "stone",
+    "accentColor": "#29251F",
+    "fontPairId": "raleway-eb-garamond",
+    "shopName": "MAISON",
+    "tagline": "A considered point of view.",
+    "editorial": {
+      "heroLayout": "split",
+      "spacing": "airy",
+      "imageRatio": "portrait",
+      "editionLabel": "The considered wardrobe — No. 01"
+    },
+    "navLinks": [
+      {
+        "label": "The collection",
+        "href": "@shop"
+      },
+      {
+        "label": "Our story",
+        "href": "@page:about"
+      },
+      {
+        "label": "Contact",
+        "href": "@page:contact"
+      }
+    ],
+    "sections": [
+      {
+        "id": "maison-cover",
+        "type": "hero",
+        "heading": "The art of\ngetting dressed.",
+        "subheading": "A new perspective on everyday dressing. Discover expressive silhouettes, quiet details and pieces to make your own.",
+        "imageUrl": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1600&q=85",
+        "primaryCta": {
+          "label": "Explore the collection",
+          "href": "@shop"
+        },
+        "secondaryCta": {
+          "label": "Our perspective",
+          "href": "@page:about"
+        }
+      },
+      {
+        "id": "maison-edit",
+        "type": "featuredProducts",
+        "title": "The selected edit",
+        "viewAll": {
+          "label": "View the collection",
+          "href": "@shop"
+        },
+        "limit": 4
+      },
+      {
+        "id": "maison-story",
+        "type": "textImage",
+        "eyebrow": "A different point of view",
+        "title": "Less, but\nwith intention.",
+        "body": "Style begins with what feels like you. Explore a wardrobe of considered shapes, tactile details and unexpected combinations.",
+        "imageUrl": "https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=1400&q=85",
+        "imagePosition": "left",
+        "cta": {
+          "label": "Discover our story",
+          "href": "@page:about"
+        }
+      },
+      {
+        "id": "maison-campaign",
+        "type": "promoBanner",
+        "title": "Your next\nsignature piece.",
+        "description": "Find something that feels entirely your own.",
+        "buttonLabel": "Discover the collection",
+        "href": "@shop",
+        "imageUrl": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1800&q=85"
+      },
+      {
+        "id": "maison-details",
+        "type": "features",
+        "title": "The details matter.",
+        "items": [
+          {
+            "icon": "sparkle",
+            "title": "Find your perspective",
+            "description": "Explore pieces and discover your own way to wear them."
+          },
+          {
+            "icon": "check",
+            "title": "Make it yours",
+            "description": "Discover the details, colours and options on each product page."
+          },
+          {
+            "icon": "truck",
+            "title": "Stay in the know",
+            "description": "Return to Manage order to follow your purchase."
+          }
+        ]
+      },
+      {
+        "id": "maison-contact",
+        "type": "contactCta",
+        "title": "A conversation in style.",
+        "body": "Questions about a piece or your order? Get in touch with the store.",
+        "buttonLabel": "Contact us",
+        "href": "@page:contact"
+      }
+    ],
+    "footerBlurb": "An independent point of view. A wardrobe that is entirely yours.",
+    "footerShopLinks": [
+      {
+        "label": "Collection",
+        "href": "@shop"
+      },
+      {
+        "label": "Our story",
+        "href": "@page:about"
+      }
+    ],
+    "footerPolicyLinks": [],
+    "footerConnectLinks": [
+      {
+        "label": "Contact",
+        "href": "@page:contact"
+      }
+    ],
+    "copyrightLine": "© Maison. All rights reserved.",
+    "pages": [
+      {
+        "id": "about",
+        "slug": "about",
+        "title": "Our story",
+        "sections": [
+          {
+            "id": "maison-about-story",
+            "type": "textImage",
+            "eyebrow": "A different point of view",
+            "title": "Less, but\nwith intention.",
+            "body": "Style begins with what feels like you. Explore a wardrobe of considered shapes, tactile details and unexpected combinations.",
+            "imageUrl": "https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=1400&q=85",
+            "imagePosition": "left",
+            "cta": {
+              "label": "Discover our story",
+              "href": "@page:about"
+            }
+          }
+        ]
+      },
+      {
+        "id": "contact",
+        "slug": "contact",
+        "title": "Contact",
+        "sections": [
+          {
+            "id": "maison-contact-details",
+            "type": "textImage",
+            "eyebrow": "Get in touch",
+            "title": "Let’s talk.",
+            "body": "Looking for your purchase? Follow its progress and manage your order using your order number and email address.",
+            "imageUrl": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1800&q=85",
+            "imagePosition": "right",
+            "cta": {
+              "label": "Track or manage your order",
+              "href": "@orders/track"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,65 +1,96 @@
 {
   "id": "artisan-atelier",
-  "name": "Artisan Atelier",
-  "description": "Warm editorial layout for handmade goods — ceramics, skincare, and small-batch gifts.",
-  "vibe": "Handmade studio",
-  "status": "AVAILABLE",
+  "name": "Mobile Hub",
+  "description": "Cellular retail layout for smartphones, Android & iPhone devices, and everyday accessories.",
+  "vibe": "Cellular & accessories",
+  "status": "DISABLED",
   "latestVersion": 1,
   "defaultConfig": {
     "templateId": "artisan-atelier",
-    "themeId": "stone",
+    "themeId": "ink",
     "configVersion": 5,
-    "shopName": "Artisan Atelier",
-    "tagline": "Handmade with care",
+    "shopName": "Mobile Hub",
+    "tagline": "Phones, accessories & fast checkout",
     "navLinks": [
-      { "label": "Shop", "href": "@shop" },
-      { "label": "New", "href": "@shop/new" },
-      { "label": "About", "href": "@page:contact" },
-      { "label": "Contact", "href": "@page:contact" }
+      {
+        "label": "Shop",
+        "href": "@shop"
+      },
+      {
+        "label": "Phones",
+        "href": "@shop/new"
+      },
+      {
+        "label": "Accessories",
+        "href": "@shop"
+      },
+      {
+        "label": "Contact",
+        "href": "@page:contact"
+      }
     ],
     "activeNavIndex": 0,
-    "heroBackgroundImageUrl": "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=2000&q=80",
-    "heroHeading": "Objects made slowly",
-    "heroSubheading": "Small-batch ceramics, natural skincare, and handmade gifts — crafted in limited runs.",
-    "heroPrimaryCta": { "label": "Browse the collection", "href": "@shop" },
-    "heroSecondaryCta": { "label": "Our story", "href": "@page:contact" },
-    "featuredTitle": "From the studio",
-    "featuredViewAll": { "label": "View all →", "href": "@shop" },
+    "heroBackgroundImageUrl": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=2000&q=80",
+    "heroHeading": "Smartphones & accessories, ready to ship",
+    "heroSubheading": "Android & iPhone devices, chargers, headphones, and USB-C cables — genuine stock with clear pricing.",
+    "heroPrimaryCta": {
+      "label": "Browse phones",
+      "href": "@shop"
+    },
+    "heroSecondaryCta": {
+      "label": "Shop accessories",
+      "href": "@shop/new"
+    },
+    "featuredTitle": "Popular right now",
+    "featuredViewAll": {
+      "label": "View all →",
+      "href": "@shop"
+    },
     "products": [
       {
-        "title": "Stoneware mug set",
-        "priceLabel": "R 320.00",
-        "imageUrl": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=800&q=80"
+        "title": "iPhone 15 128GB",
+        "priceLabel": "R 14 999.00",
+        "imageUrl": "https://images.unsplash.com/photo-1598327275664-4991ae9671ef?auto=format&fit=crop&w=800&q=80"
       },
       {
-        "title": "Botanical face oil",
-        "priceLabel": "R 245.00",
-        "imageUrl": "https://images.unsplash.com/photo-1556228578-0d95b1a5580f?auto=format&fit=crop&w=800&q=80"
+        "title": "Samsung Galaxy A54",
+        "priceLabel": "R 7 499.00",
+        "imageUrl": "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=800&q=80"
       },
       {
-        "title": "Linen table runner",
-        "priceLabel": "R 410.00",
-        "imageUrl": "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=800&q=80"
+        "title": "USB-C fast charger 25W",
+        "priceLabel": "R 349.00",
+        "imageUrl": "https://images.unsplash.com/photo-1588878340556-209b03158a15?auto=format&fit=crop&w=800&q=80"
+      },
+      {
+        "title": "Wireless earbuds",
+        "priceLabel": "R 899.00",
+        "imageUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80"
+      },
+      {
+        "title": "USB-C cable 1m",
+        "priceLabel": "R 149.00",
+        "imageUrl": "https://images.unsplash.com/photo-1625948515291-69613efd448f?auto=format&fit=crop&w=800&q=80"
       }
     ],
     "promos": [
       {
-        "title": "Studio favourites",
-        "description": "Pieces we keep coming back to — restocked in small batches.",
-        "buttonLabel": "Shop favourites",
-        "imageUrl": "https://images.unsplash.com/photo-1615529328331-f8917597711f?auto=format&fit=crop&w=1400&q=80",
+        "title": "Accessory bundle deals",
+        "description": "Pair a charger, USB-C cable, and headphones — save on everyday essentials.",
+        "buttonLabel": "Shop bundles",
+        "imageUrl": "https://images.unsplash.com/photo-1556656793-08538806a219?auto=format&fit=crop&w=1400&q=80",
         "href": "@shop"
       }
     ],
     "features": [
       {
-        "title": "Small-batch only",
-        "description": "Limited runs — when it's gone, it's gone until the next firing.",
+        "title": "Genuine devices",
+        "description": "Android & iPhone stock from trusted suppliers — model and storage clearly listed.",
         "icon": "sparkle"
       },
       {
-        "title": "Careful packaging",
-        "description": "Fragile pieces wrapped with care for safe delivery.",
+        "title": "Fast dispatch",
+        "description": "Phones and accessories packed securely and shipped with trackable delivery.",
         "icon": "truck"
       },
       {
@@ -72,11 +103,17 @@
       {
         "id": "home-hero",
         "type": "hero",
-        "imageUrl": "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=2000&q=80",
-        "heading": "Objects made slowly",
-        "subheading": "Small-batch ceramics, natural skincare, and handmade gifts — crafted in limited runs.",
-        "primaryCta": { "label": "Browse the collection", "href": "@shop" },
-        "secondaryCta": { "label": "Our story", "href": "@page:contact" }
+        "imageUrl": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=2000&q=80",
+        "heading": "Smartphones & accessories, ready to ship",
+        "subheading": "Android & iPhone devices, chargers, headphones, and USB-C cables — genuine stock with clear pricing.",
+        "primaryCta": {
+          "label": "Browse phones",
+          "href": "@shop"
+        },
+        "secondaryCta": {
+          "label": "Shop accessories",
+          "href": "@shop/new"
+        }
       },
       {
         "id": "home-values",
@@ -84,13 +121,13 @@
         "title": "Why shop with us",
         "items": [
           {
-            "title": "Small-batch only",
-            "description": "Limited runs — when it's gone, it's gone until the next firing.",
+            "title": "Genuine devices",
+            "description": "Android & iPhone stock from trusted suppliers — model and storage clearly listed.",
             "icon": "sparkle"
           },
           {
-            "title": "Careful packaging",
-            "description": "Fragile pieces wrapped with care for safe delivery.",
+            "title": "Fast dispatch",
+            "description": "Phones and accessories packed securely and shipped with trackable delivery.",
             "icon": "truck"
           },
           {
@@ -103,41 +140,54 @@
       {
         "id": "home-featured-products",
         "type": "featuredProducts",
-        "title": "From the studio",
-        "viewAll": { "label": "View all →", "href": "@shop" },
-        "limit": 4,
+        "title": "Popular right now",
+        "viewAll": {
+          "label": "View all →",
+          "href": "@shop"
+        },
+        "limit": 5,
         "products": [
           {
-            "title": "Stoneware mug set",
-            "priceLabel": "R 320.00",
-            "imageUrl": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=800&q=80"
+            "title": "iPhone 15 128GB",
+            "priceLabel": "R 14 999.00",
+            "imageUrl": "https://images.unsplash.com/photo-1598327275664-4991ae9671ef?auto=format&fit=crop&w=800&q=80"
           },
           {
-            "title": "Botanical face oil",
-            "priceLabel": "R 245.00",
-            "imageUrl": "https://images.unsplash.com/photo-1556228578-0d95b1a5580f?auto=format&fit=crop&w=800&q=80"
+            "title": "Samsung Galaxy A54",
+            "priceLabel": "R 7 499.00",
+            "imageUrl": "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=800&q=80"
           },
           {
-            "title": "Linen table runner",
-            "priceLabel": "R 410.00",
-            "imageUrl": "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=800&q=80"
+            "title": "USB-C fast charger 25W",
+            "priceLabel": "R 349.00",
+            "imageUrl": "https://images.unsplash.com/photo-1588878340556-209b03158a15?auto=format&fit=crop&w=800&q=80"
+          },
+          {
+            "title": "Wireless earbuds",
+            "priceLabel": "R 899.00",
+            "imageUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80"
+          },
+          {
+            "title": "USB-C cable 1m",
+            "priceLabel": "R 149.00",
+            "imageUrl": "https://images.unsplash.com/photo-1625948515291-69613efd448f?auto=format&fit=crop&w=800&q=80"
           }
         ]
       },
       {
-        "id": "home-promo-studio",
+        "id": "home-promo-accessories",
         "type": "promoBanner",
-        "title": "Studio favourites",
-        "description": "Pieces we keep coming back to — restocked in small batches.",
-        "buttonLabel": "Shop favourites",
-        "imageUrl": "https://images.unsplash.com/photo-1615529328331-f8917597711f?auto=format&fit=crop&w=1400&q=80",
+        "title": "Accessory bundle deals",
+        "description": "Pair a charger, USB-C cable, and headphones — save on everyday essentials.",
+        "buttonLabel": "Shop bundles",
+        "imageUrl": "https://images.unsplash.com/photo-1556656793-08538806a219?auto=format&fit=crop&w=1400&q=80",
         "href": "@shop"
       },
       {
         "id": "home-contact",
         "type": "contactCta",
-        "title": "Questions about a piece?",
-        "body": "Message us about sizing, materials, or custom orders — we reply personally.",
+        "title": "Need help choosing a phone?",
+        "body": "Message us about model compatibility, storage, or accessory fit — we reply personally.",
         "buttonLabel": "Get in touch",
         "href": "@page:contact"
       }
@@ -151,10 +201,13 @@
           {
             "id": "contact-hero",
             "type": "hero",
-            "imageUrl": "https://images.unsplash.com/photo-1615529328331-f8917597711f?auto=format&fit=crop&w=1200&q=80",
+            "imageUrl": "https://images.unsplash.com/photo-1556656793-08538806a219?auto=format&fit=crop&w=1200&q=80",
             "heading": "We're here to help",
-            "subheading": "Orders, custom requests, or care instructions — reach out and we'll reply soon.",
-            "primaryCta": { "label": "Browse collection", "href": "@shop" },
+            "subheading": "Orders, device questions, or accessory recommendations — reach out and we'll reply soon.",
+            "primaryCta": {
+              "label": "Browse phones",
+              "href": "@shop"
+            },
             "secondaryCta": null
           },
           {
@@ -162,9 +215,9 @@
             "type": "contact",
             "eyebrow": "Contact",
             "title": "Get in touch",
-            "body": "WhatsApp is fastest for quick questions. For custom orders, leave a message and we'll follow up.",
-            "email": "hello@example.com",
-            "hours": "Mon–Sat, 9:00–16:00",
+            "body": "WhatsApp is fastest for stock checks. For bulk orders or trade-ins, leave a message and we'll follow up.",
+            "email": "lukeshinkandu546@gmail.com",
+            "hours": "Mon–Sat, 9:00–18:00",
             "note": "Usually replies within a few hours.",
             "whatsappLabel": "Chat on WhatsApp",
             "whatsappHref": "",
@@ -178,16 +231,16 @@
             "title": "Before you write",
             "items": [
               {
-                "question": "Are pieces dishwasher-safe?",
-                "answer": "Most stoneware is dishwasher-safe unless noted on the product page. Hand wash glazed art pieces."
+                "question": "Do you sell both Android and iPhone?",
+                "answer": "Yes — we stock popular Android devices and selected iPhone models. Check each product page for storage and colour options."
               },
               {
-                "question": "Do you take custom orders?",
-                "answer": "Yes — message us with your idea and timeline. Custom work depends on studio schedule."
+                "question": "Are chargers and cables compatible with my phone?",
+                "answer": "Most new Android phones use USB-C. iPhone 15 and newer use USB-C; older iPhones use Lightning. Message us if you're unsure."
               },
               {
-                "question": "How is fragile pottery shipped?",
-                "answer": "Each piece is wrapped individually with protective padding. We use trusted couriers for delivery."
+                "question": "How are phones shipped?",
+                "answer": "Devices are packed in protective packaging with tracked courier delivery. Accessories ship in the same order when purchased together."
               }
             ]
           }
@@ -198,8 +251,8 @@
       "shop": {
         "eyebrow": "Shop",
         "title": "All products",
-        "description": "Browse handmade pieces from the studio — ceramics, skincare, and home goods.",
-        "imageUrl": "https://images.unsplash.com/photo-1615529328331-f8917597711f?auto=format&fit=crop&w=1400&q=80",
+        "description": "Browse smartphones, chargers, headphones, USB-C cables, and mobile accessories.",
+        "imageUrl": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1400&q=80",
         "chrome": {
           "showSearch": true,
           "showCollectionTabs": true,
@@ -210,10 +263,10 @@
         }
       },
       "new": {
-        "eyebrow": "Just in",
-        "title": "New from the studio",
-        "description": "Fresh pieces from the latest batch.",
-        "imageUrl": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=1200&q=80",
+        "eyebrow": "New arrivals",
+        "title": "Latest phones",
+        "description": "Fresh Android & iPhone stock — new models and restocked favourites.",
+        "imageUrl": "https://images.unsplash.com/photo-1598327275664-4991ae9671ef?auto=format&fit=crop&w=1200&q=80",
         "chrome": {
           "showSearch": true,
           "showCollectionTabs": true,
@@ -224,10 +277,10 @@
         }
       },
       "sale": {
-        "eyebrow": "Sale",
-        "title": "Studio sale",
-        "description": "End-of-batch pieces and seasonal offers.",
-        "imageUrl": "https://images.unsplash.com/photo-1556228578-0d95b1a5580f?auto=format&fit=crop&w=1400&q=80",
+        "eyebrow": "Deals",
+        "title": "Accessory specials",
+        "description": "Discounted chargers, headphones, cables, and bundle offers.",
+        "imageUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1400&q=80",
         "chrome": {
           "showSearch": true,
           "showCollectionTabs": true,
@@ -238,27 +291,60 @@
         }
       }
     },
-    "footerBlurb": "Handmade goods from a small studio — thoughtful materials, limited batches, and personal support.",
+    "footerBlurb": "Your local cellular shop — Android & iPhone devices, chargers, headphones, and USB-C accessories with personal support.",
     "footerShopLinks": [
-      { "label": "Shop all", "href": "@shop" },
-      { "label": "New arrivals", "href": "@shop/new" },
-      { "label": "Sale", "href": "@shop/sale" },
-      { "label": "Contact", "href": "@page:contact" }
+      {
+        "label": "All products",
+        "href": "@shop"
+      },
+      {
+        "label": "Phones",
+        "href": "@shop/new"
+      },
+      {
+        "label": "Deals",
+        "href": "@shop/sale"
+      },
+      {
+        "label": "Contact",
+        "href": "@page:contact"
+      }
     ],
     "footerPolicyLinks": [
-      { "label": "Privacy policy", "href": "/privacy" },
-      { "label": "Terms of service", "href": "/terms" },
-      { "label": "Shipping info", "href": "#" },
-      { "label": "Returns", "href": "#" }
+      {
+        "label": "Privacy policy",
+        "href": "/privacy"
+      },
+      {
+        "label": "Terms of service",
+        "href": "/terms"
+      },
+      {
+        "label": "Warranty info",
+        "href": "#"
+      },
+      {
+        "label": "Returns",
+        "href": "#"
+      }
     ],
     "footerConnectLinks": [
-      { "label": "Contact us", "href": "@page:contact" },
-      { "label": "Instagram", "href": "#" },
-      { "label": "Studio journal", "href": "#" }
+      {
+        "label": "Contact us",
+        "href": "@page:contact"
+      },
+      {
+        "label": "Instagram",
+        "href": "#"
+      },
+      {
+        "label": "Trade-in enquiries",
+        "href": "@page:contact"
+      }
     ],
-    "copyrightLine": "© 2026 SME Operations. All rights reserved.",
+    "copyrightLine": "© 2026 Mobile Hub. All rights reserved.",
     "cartCountLabel": "0",
     "whatsappNumber": "+27 00 000 0000",
-    "accentColor": "#78716c"
+    "accentColor": "#1e293b"
   }
 }

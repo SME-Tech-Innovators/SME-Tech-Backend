@@ -89,6 +89,13 @@ class StorefrontTemplateSeedDataTest {
                 .defaultConfig(Map.of("configVersion", 1))
                 .build();
 
+        when(templateRepository.findById("chapter-bookshop")).thenReturn(Optional.empty());
+        when(templateVersionRepository.findByTemplateIdAndVersion("chapter-bookshop", 1))
+                .thenReturn(Optional.empty());
+        when(templateRepository.findById("maison-editorial")).thenReturn(Optional.empty());
+        when(templateRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(templateVersionRepository.findByTemplateIdAndVersion("maison-editorial", 1))
+                .thenReturn(Optional.empty());
         when(templateRepository.findById("classic-boutique")).thenReturn(Optional.of(classic));
         when(templateRepository.findById("minimal-catalogue")).thenReturn(Optional.of(minimal));
         when(templateRepository.findById("artisan-atelier")).thenReturn(Optional.of(artisan));
@@ -103,6 +110,12 @@ class StorefrontTemplateSeedDataTest {
 
         seedData.run(new DefaultApplicationArguments());
 
+        StorefrontTemplateVersion maison = versionForMaison();
+        assertThat(maison.getDefaultConfig()).containsEntry("templateId", "maison-editorial");
+        assertThat(maison.getDefaultConfig()).containsKey("editorial");
+        assertThat(maison.getTemplate().getStatus()).isEqualTo(StorefrontTemplateStatus.AVAILABLE);
+
+        assertThat(artisan.getStatus()).isEqualTo(StorefrontTemplateStatus.DISABLED);
         assertThat(minimal.getStatus()).isEqualTo(StorefrontTemplateStatus.AVAILABLE);
         assertThat(minimal.getVibe()).isEqualTo("Clean catalogue");
         verify(templateRepository).save(minimal);
@@ -127,4 +140,12 @@ class StorefrontTemplateSeedDataTest {
         assertThat(sections).extracting(s -> s.get("type"))
                 .containsExactly("hero", "featuredProducts", "shopByCategory", "features", "contactCta");
     }
+    private StorefrontTemplateVersion versionForMaison() {
+        ArgumentCaptor<StorefrontTemplateVersion> captor = ArgumentCaptor.forClass(StorefrontTemplateVersion.class);
+        verify(templateVersionRepository, atLeastOnce()).save(captor.capture());
+        return captor.getAllValues().stream()
+                .filter(v -> "maison-editorial".equals(v.getTemplate().getId()))
+                .findFirst().orElseThrow();
+    }
+
 }
