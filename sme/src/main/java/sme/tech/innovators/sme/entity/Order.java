@@ -113,6 +113,11 @@ public class Order {
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
 
+    @OneToOne(mappedBy = "order", fetch = FetchType.LAZY)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Delivery delivery;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

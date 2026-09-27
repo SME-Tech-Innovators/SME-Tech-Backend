@@ -15,4 +15,4 @@ set -a
 source .env
 set +a
 
-exec ./mvnw spring-boot:run
+exec ./mvnw spring-boot:run -Dspring-boot.run.profiles=local

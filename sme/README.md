@@ -96,6 +96,16 @@ Activate the `local` profile in your IntelliJ run configuration:
 - **VM options**: `-Dspring.profiles.active=local`
 - **OR** set the environment variable `SPRING_PROFILES_ACTIVE=local`
 
+From PowerShell, use the repository helper so the profile is activated automatically:
+```powershell
+.\run-local.ps1
+```
+
+From Git Bash or another Bash shell:
+```bash
+./run-local.sh
+```
+
 AWS credentials (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) still need to be set as environment variables — they are intentionally not in this file to prevent accidental exposure.
 
 **Using a `.env` file (alternative for local dev):**
@@ -674,3 +684,158 @@ Tests do **not** require any environment variables — the `test` profile overri
 ```bash
 ./mvnw test
 ```
+
+---
+
+## Uber Direct (On-Demand Courier)
+
+Uber Direct lets merchants dispatch a courier for an order immediately after payment. Customers see a live fee + ETA quote at checkout before they place the order.
+
+### How it works
+
+```
+Merchant (dashboard)
+  └─ PUT /workspaces/{id}/delivery-settings   ← enable Uber Direct + set pickup address
+
+Customer (checkout)
+  └─ POST /storefronts/{slug}/checkout/delivery-options  ← get fee + quoteId
+  └─ POST /storefronts/{slug}/checkout                   ← place order (include quoteId)
+  └─ POST /storefronts/{slug}/checkout/{orderId}/pay     ← pay
+
+Merchant (after payment)
+  └─ POST /workspaces/{id}/delivery-settings/uber-direct/orders/{orderId}/book?quoteId=...
+  └─ POST /workspaces/{id}/delivery-settings/uber-direct/orders/{orderId}/refresh-status
+```
+
+Full frontend integration reference: `docs/uber-direct-frontend-integration.md`  
+Test cases: `docs/test-cases/uber-direct-test-cases.md`
+
+---
+
+### Local development — what you need
+
+**Step 1 — Get sandbox credentials from Uber**
+
+1. Go to [https://developer.uber.com](https://developer.uber.com) and sign in.
+2. Create an app (or use your existing one) → add the **Deliveries** product scope.
+3. Copy **Client ID** and **Client Secret** from the app's credential panel.
+4. Go to your Uber Direct sandbox dashboard → **Settings → Account** → copy your **Customer ID**.
+
+**Step 2 — Add to your `.env` file**
+
+```
+UBER_DIRECT_ENABLED=true
+UBER_DIRECT_CLIENT_ID=<your-sandbox-client-id>
+UBER_DIRECT_CLIENT_SECRET=<your-sandbox-client-secret>
+UBER_DIRECT_CUSTOMER_ID=<your-sandbox-customer-id>
+UBER_DIRECT_MODE=sandbox
+UBER_DIRECT_BASE_URL=https://sandbox-api.uber.com
+UBER_DIRECT_TOKEN_URL=https://auth.uber.com/oauth/v2/token
+```
+
+Or set them in `application-local.yaml`:
+
+```yaml
+app:
+  uber-direct:
+    enabled: true
+    client-id: <your-sandbox-client-id>
+    client-secret: <your-sandbox-client-secret>
+    customer-id: <your-sandbox-customer-id>
+    mode: sandbox
+    base-url: https://sandbox-api.uber.com
+    token-url: https://auth.uber.com/oauth/v2/token
+```
+
+**Step 3 — Merchant sets a pickup address (once per workspace)**
+
+```http
+PUT /api/v1/workspaces/{workspaceId}/delivery-settings
+Authorization: Bearer <merchant-jwt>
+Content-Type: application/json
+
+{
+  "uberDirectEnabled": true,
+  "pickupAddressLine1": "12 Main Street",
+  "pickupCity": "Cape Town",
+  "pickupCountry": "ZA",
+  "pickupLatitude": -33.9249,
+  "pickupLongitude": 18.4241,
+  "pickupContactName": "Store Name",
+  "pickupContactPhone": "+27821234567"
+}
+```
+
+**Step 4 — Customer gets a quote at checkout**
+
+```http
+POST /api/v1/public/storefronts/{storeSlug}/checkout/delivery-options
+Content-Type: application/json
+
+{
+  "dropoffAddressLine1": "45 Long Street",
+  "dropoffCity": "Cape Town",
+  "dropoffCountry": "ZA",
+  "dropoffLatitude": -33.9258,
+  "dropoffLongitude": 18.4232,
+  "manifestTotalValueCents": 45000
+}
+```
+
+Response includes `quoteId`, `fee`, `estimatedDeliveryTime`, and `available`.
+
+**Step 5 — Merchant dispatches after payment**
+
+```http
+POST /api/v1/workspaces/{workspaceId}/delivery-settings/uber-direct/orders/{orderId}/book?quoteId={quoteId}
+Authorization: Bearer <merchant-jwt>
+```
+
+---
+
+### Azure deployment — required secrets
+
+Add these in **Azure App Service → Configuration → Application Settings** for each app service that handles deliveries:
+
+| Application Setting name | Value | Notes |
+|---|---|---|
+| `UBER_DIRECT_ENABLED` | `true` | Set to `false` to disable without redeploying |
+| `UBER_DIRECT_CLIENT_ID` | `<production-client-id>` | From Uber Developer Dashboard |
+| `UBER_DIRECT_CLIENT_SECRET` | `<production-client-secret>` | From Uber Developer Dashboard — treat as a password |
+| `UBER_DIRECT_CUSTOMER_ID` | `<production-customer-id>` | From Uber Direct dashboard → Settings → Account |
+| `UBER_DIRECT_MODE` | `production` | Change from `sandbox` to `production` when going live |
+| `UBER_DIRECT_BASE_URL` | `https://api.uber.com` | Production base URL (sandbox: `https://sandbox-api.uber.com`) |
+| `UBER_DIRECT_TOKEN_URL` | `https://auth.uber.com/oauth/v2/token` | Same for sandbox and production |
+
+> **Never** put these values directly in `application.yaml` or commit them to git. They are read via `${UBER_DIRECT_*}` placeholders — setting the Application Settings in Azure is all that's needed.
+
+**Sandbox vs production URLs at a glance:**
+
+| | Sandbox | Production |
+|---|---|---|
+| `UBER_DIRECT_BASE_URL` | `https://sandbox-api.uber.com` | `https://api.uber.com` |
+| `UBER_DIRECT_MODE` | `sandbox` | `production` |
+| Token URL | `https://auth.uber.com/oauth/v2/token` | same |
+
+**Switching from sandbox to production:** update only `UBER_DIRECT_BASE_URL`, `UBER_DIRECT_MODE`, and swap in the production `UBER_DIRECT_CLIENT_ID` / `UBER_DIRECT_CLIENT_SECRET` / `UBER_DIRECT_CUSTOMER_ID`. No code changes required.
+
+---
+
+### Uber Direct environment variables — full reference
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `UBER_DIRECT_ENABLED` | Yes | `false` | Master switch. Set to `true` to activate the feature. |
+| `UBER_DIRECT_CLIENT_ID` | Yes (when enabled) | — | OAuth2 client ID from Uber Developer Dashboard |
+| `UBER_DIRECT_CLIENT_SECRET` | Yes (when enabled) | — | OAuth2 client secret from Uber Developer Dashboard |
+| `UBER_DIRECT_CUSTOMER_ID` | Yes (when enabled) | — | Your Uber Direct customer/account ID |
+| `UBER_DIRECT_MODE` | No | `sandbox` | `sandbox` or `production` — informational label |
+| `UBER_DIRECT_BASE_URL` | No | `https://sandbox-api.uber.com` | REST API base URL |
+| `UBER_DIRECT_TOKEN_URL` | No | `https://auth.uber.com/oauth/v2/token` | OAuth2 token endpoint |
+
+If `UBER_DIRECT_ENABLED=false` or any of the three required credentials are blank:
+- The merchant settings page still works (shows `uberDirectAvailable: false`)
+- The checkout delivery-options endpoint returns an empty `options` list (no error)
+- The book/refresh endpoints return `503 Service Unavailable`
+
+No restart is needed to disable — set `UBER_DIRECT_ENABLED=false` in Application Settings and save.
