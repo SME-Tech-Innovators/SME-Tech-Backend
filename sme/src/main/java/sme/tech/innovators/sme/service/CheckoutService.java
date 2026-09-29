@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import sme.tech.innovators.sme.dto.request.CheckoutRequest;
 import sme.tech.innovators.sme.dto.response.OrderConfirmationDto;
 import sme.tech.innovators.sme.dto.response.OrderItemDto;
+import sme.tech.innovators.sme.dto.response.DeliveryPublicDto;
 import sme.tech.innovators.sme.entity.*;
 import sme.tech.innovators.sme.exception.*;
 import sme.tech.innovators.sme.repository.CartRepository;
@@ -216,8 +217,23 @@ public class CheckoutService {
                 .status(order.getStatus().name().toLowerCase())
                 .paymentStatus(order.getPaymentStatus().name().toLowerCase())
                 .inventoryDecremented(order.isInventoryDecremented())
+                .delivery(order.getDelivery() == null ? null : toPublicDeliveryDto(order.getDelivery()))
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
+                .build();
+    }
+
+    private DeliveryPublicDto toPublicDeliveryDto(sme.tech.innovators.sme.entity.Delivery delivery) {
+        return DeliveryPublicDto.builder()
+                .id(delivery.getId().toString())
+                .status(delivery.getStatus().name().toLowerCase())
+                .carrierName(delivery.getCarrierName())
+                .trackingNumber(delivery.getTrackingNumber())
+                .trackingUrl(delivery.getTrackingUrl())
+                .publicNotes(delivery.getPublicNotes())
+                .estimatedDeliveryAt(delivery.getEstimatedDeliveryAt())
+                .dispatchedAt(delivery.getDispatchedAt())
+                .deliveredAt(delivery.getDeliveredAt())
                 .build();
     }
 }

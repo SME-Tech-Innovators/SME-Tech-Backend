@@ -17,6 +17,12 @@ public class AwsS3Config {
     @Value("${app.aws.region}")
     private String awsRegion;
 
+    @Value("${app.aws.access-key}")
+    private String awsAccessKey;
+
+    @Value("${app.aws.secret-key}")
+    private String awsSecretKey;
+
     @Bean
     public S3Client s3Client() {
         return S3Client.builder()
@@ -34,15 +40,13 @@ public class AwsS3Config {
     }
 
     private StaticCredentialsProvider credentialsProvider() {
-        String accessKey = System.getenv("AWS_ACCESS_KEY_ID");
-        String secretKey = System.getenv("AWS_SECRET_ACCESS_KEY");
-        if (accessKey == null || accessKey.isBlank()) {
-            throw new IllegalStateException("Missing required environment variable: AWS_ACCESS_KEY_ID");
+        if (awsAccessKey == null || awsAccessKey.isBlank()) {
+            throw new IllegalStateException("Missing required configuration property: app.aws.access-key (AWS_ACCESS_KEY_ID)");
         }
-        if (secretKey == null || secretKey.isBlank()) {
-            throw new IllegalStateException("Missing required environment variable: AWS_SECRET_ACCESS_KEY");
+        if (awsSecretKey == null || awsSecretKey.isBlank()) {
+            throw new IllegalStateException("Missing required configuration property: app.aws.secret-key (AWS_SECRET_ACCESS_KEY)");
         }
-        return StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey));
+        return StaticCredentialsProvider.create(AwsBasicCredentials.create(awsAccessKey, awsSecretKey));
     }
 
     private String requireRegion() {
