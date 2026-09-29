@@ -13,9 +13,8 @@ import java.util.UUID;
  * pickup address that will be used as the collection point for all
  * deliveries originating from this workspace.
  *
- * <p>Currently supports: Uber Direct.
- * Future providers (ShipLogic per-workspace toggle, etc.) can be added
- * as additional boolean columns here.
+ * <p>Currently supports Uber Direct. Additional delivery providers can be
+ * added as additional boolean columns here.
  */
 @Entity
 @Table(name = "workspace_delivery_settings",

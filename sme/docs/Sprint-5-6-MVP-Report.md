@@ -490,7 +490,7 @@ The `dev_innovators.yml` workflow runs on every push to `dev`:
 | [Member 1] | [Student number] | Backend Lead | Auth module, JWT service, registration flow, password reset | [Commit hashes] |
 | [Member 2] | [Student number] | Frontend Lead | Dashboard, storefront editor, public storefront, forgot/reset password pages | [Commit hashes] |
 | [Member 3] | [Student number] | Payments & Orders | Paystack integration, webhook handling, order management, inventory | [Commit hashes] |
-| [Member 4] | [Student number] | Testing & QA | Test suite, JaCoCo setup, CI pipeline fixes, bug register | [Commit hashes] |
+| [Member 4] | [Student number] | Testing & QA | - Ran automated backend and frontend tests<br>- Prepared JaCoCo coverage evidence<br>- Created the bug register and regression evidence | [Commit hashes] |
 | [Member 5] | [Student number] | Analytics & Media | Analytics service, S3 media upload, storefront publish system | [Commit hashes] |
 
 *Individual reflections on technical learning and challenges to be written by each member.*

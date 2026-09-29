@@ -98,7 +98,6 @@ app:
     mode: ${UBER_DIRECT_MODE:sandbox}
     base-url: ${UBER_DIRECT_BASE_URL:https://sandbox-api.uber.com}
     token-url: ${UBER_DIRECT_TOKEN_URL:https://auth.uber.com/oauth/v2/token}
-    mock-mode: ${UBER_DIRECT_MOCK_MODE:false}
 
 springdoc:
   api-docs:
@@ -167,6 +166,7 @@ app:
     bearer-token: test-bobgo-token
     sandbox: true
     webhook-secret: test-bobgo-webhook-secret
+
   uber-direct:
     enabled: false
     client-id: test_client_id
