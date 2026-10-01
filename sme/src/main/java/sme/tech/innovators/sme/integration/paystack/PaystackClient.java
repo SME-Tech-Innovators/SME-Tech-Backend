@@ -64,6 +64,8 @@ public class PaystackClient {
         body.put("currency", currency);
         body.put("reference", reference);
         body.put("subaccount", subaccountCode);
+        // Explicitly expose card checkout alongside South African QR payments.
+        body.put("channels", List.of("card", "qr"));
         body.put("metadata", metadata);
         if (callbackUrl != null && !callbackUrl.isBlank()) {
             body.put("callback_url", callbackUrl);
